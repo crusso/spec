@@ -1,3 +1,39 @@
+(*F#
+module Int32 =
+struct
+
+    let t = int32
+    let sub i j = i - j
+    let add i j = i + j
+    let max_int = System.Int32.MaxValue
+    let min_int = System.Int32.MinValue
+    let of_int i = i
+    let to_int i = i
+end
+
+module Int64 =
+struct
+    let of_int (i:int32) = (int64) i
+    let of_int32 (i:int) = (int64) i
+    let to_int (i:int64) = (int) i
+end
+
+let max_int = Int32.max_int
+
+let Invalid_argument s = new System.ArgumentException(s) //TBR
+
+module Buffer =
+    struct 
+          type t = System.Text.StringBuilder
+          let  create (n:int) = new System.Text.StringBuilder(n)
+          let add_char (b:t) (c:char) = ignore (b.Append(c))
+          let contents (b:t) = b.ToString()
+   end
+
+
+F#*)
+
+
 module Fun =
 struct
   let rec repeat n f x =
@@ -6,7 +42,8 @@ end
 
 module Int =
 struct
-  let log2 n =
+  (*IF-OCAML*)
+    let log2 n =
     if n <= 0 then failwith "log2";
     let rec loop acc n = if n = 1 then acc else loop (acc + 1) (n lsr 1) in
     loop 0 n
@@ -14,10 +51,29 @@ struct
   let is_power_of_two n =
     if n < 0 then failwith "is_power_of_two";
     n <> 0 && n land (n - 1) = 0
+   (*ENDIF-OCAML*)
+(*F#
+    let log2 n =
+    if n <= 0 then failwith "log2";
+    let rec loop acc n = if n = 1 then acc else loop (acc + 1) (n >>> 1) in //TBR
+    loop 0 n
+
+  let is_power_of_two n =
+    if n < 0 then failwith "is_power_of_two";
+    n <> 0 && n &&& (n - 1) = 0 //TBR
+F#*)
 end
 
 module String =
 struct
+
+   module String  =
+   struct
+    let sub (s:string) i l = s.Substring(i,l).ToString()
+    let index_from (s:string) i (c:char) = s.IndexOf(c,i)
+    
+   end
+
   let implode cs =
     let buf = Buffer.create 80 in
     List.iter (Buffer.add_char buf) cs;
@@ -41,6 +97,8 @@ struct
       let len = min n (String.length s - i) in
       if len = 0 then [] else String.sub s i len :: loop (i + len)
     in loop 0
+
+  let sub (s:string) i n =  s.Substring(i,n)
 end
 
 module List =
@@ -121,10 +179,19 @@ end
 
 module Array32 =
 struct
+
+ (*IF-OCAML*)
   let make n x =
     if n < 0l || Int64.of_int32 n > Int64.of_int max_int then
       raise (Invalid_argument "Array32.make");
     Array.make (Int32.to_int n) x
+ (*ENDIF-OCAML*)
+(*F#
+    let make n x =
+    if n < 0l || Int64.of_int32 n > Int64.of_int max_int then
+      raise (Invalid_argument "Array32.make");
+    Array.create (Int32.to_int n) x
+F#*)
 
   let length a = Int32.of_int (Array.length a)
 
@@ -138,6 +205,7 @@ struct
     Array.blit a1 (index_of_int32 i1) a2 (index_of_int32 i2) (index_of_int32 n)
 end
 
+ (*IF-OCAML*)
 module Bigarray =
 struct
   open Bigarray
@@ -160,6 +228,42 @@ struct
     let sub a i n = Array1.sub a (index_of_int64 i) (index_of_int64 n)
   end
 end
+ (*ENDIF-OCAML*)
+(*F#
+module Bigarray =
+struct
+
+  module Array1 =
+  struct
+    type ('a,'b,'c) t  = Array1 of 'a []
+    let dim<'a,'b,'c> (Array1 a: ('a,'b,'c) t) = a.Length
+    let get (Array1 a) i = a.[i]
+    let set (Array1 a) i v = a.[i] <- v
+    let sub (Array1 a) i n = Array1 (Array.sub a i n)
+  end
+
+  module Array1_64 =
+  struct
+    let create kind layout n =
+      if n < 0L || n > Int64.of_int max_int then
+        raise (Invalid_argument "Bigarray.Array1_64.create");
+      Array.create (* kind layout *) (Int64.to_int n)
+
+    let dim a = Int64.of_int (Array1.dim a)
+
+    let index_of_int64 i =
+      if i < 0L || i > Int64.of_int max_int then -1 else
+      Int64.to_int i
+
+    let get a i = Array1.get a (index_of_int64 i)
+    let set a i x = Array1.set a (index_of_int64 i) x
+    let sub a i n = Array1.sub a (index_of_int64 i) (index_of_int64 n)
+  end
+end
+F#*)
+
+
+
 
 module Option =
 struct

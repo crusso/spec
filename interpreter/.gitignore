@@ -7,6 +7,16 @@
 *.js
 *.zip
 *.mlpack
+Build
+Release
+Debug
+*.dll
+*.exe
+*.pdb
+*.obj
+*.xml
+*.suo
+packages
 _build
 wasm
 

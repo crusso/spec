@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>625e1fd9-d53f-4210-8229-3771631fd2c5</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>fswasm</RootNamespace>
+    <AssemblyName>fswasm</AssemblyName>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <TargetFSharpCoreVersion>4.4.1.0</TargetFSharpCoreVersion>
+    <Name>fswasm</Name>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <Tailcalls>false</Tailcalls>
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DocumentationFile>bin\$(Configuration)\$(AssemblyName).XML</DocumentationFile>
+    <Prefer32Bit>true</Prefer32Bit>
+    <OtherFlags>--mlcompatibility</OtherFlags>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <Tailcalls>true</Tailcalls>
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <WarningLevel>3</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DocumentationFile>bin\$(Configuration)\$(AssemblyName).XML</DocumentationFile>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
+  </PropertyGroup>
+  <Choose>
+    <When Condition="'$(VisualStudioVersion)' == '11.0'">
+      <PropertyGroup Condition=" '$(FSharpTargetsPath)' == '' AND Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets') ">
+        <FSharpTargetsPath>$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets</FSharpTargetsPath>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup Condition=" '$(FSharpTargetsPath)' == '' AND Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\FSharp\Microsoft.FSharp.Targets') ">
+        <FSharpTargetsPath>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\FSharp\Microsoft.FSharp.Targets</FSharpTargetsPath>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+  <Import Project="$(FSharpTargetsPath)" />
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.fs" />
+    <None Include="App.config" />
+    <Content Include="packages.config" />
+   
+    <Compile Include="..\..\exec\numeric_error.ml" />
+
+   <Compile Include="..\..\exec\int.ml" />
+
+   <!--<Compile Include="..\..\util\lib.mli" />-->
+
+    <Compile Include="..\..\util\lib.ml" />
+    
+    <Compile Include="..\..\exec\i32.ml" />
+ 
+    <Compile Include="..\..\exec\float.ml" />
+   
+    <Compile Include="..\..\syntax\types.ml" />
+    
+ 
+    <Compile Include="..\..\exec\f32.ml" />
+
+    <Compile Include="..\..\exec\i64.ml" />
+    
+    <Compile Include="..\..\exec\f64.ml" />
+
+
+
+    <Compile Include="..\..\syntax\values.ml" />
+
+
+<!-- <Compile Include="..\..\runtime\memory.mli" /> 
+
+    <Compile Include="..\..\util\source.mli" />
+
+    <Compile Include="..\..\syntax\ast.ml" />
+
+    <Compile Include="..\..\runtime\func.mli" />
+
+    <Compile Include="..\..\runtime\global.mli" />
+
+    <Compile Include="..\..\runtime\table.mli" />
+-->
+
+    <Compile Include="..\..\runtime\instance.ml" />
+
+<!--
+    <Compile Include="..\..\exec\eval.mli" />
+
+    <Compile Include="..\..\binary\utf8.mli" />
+
+    <Compile Include="..\..\host\env.ml" />
+
+    <Compile Include="..\..\main\flags.ml" />
+
+    <Compile Include="..\..\script\import.mli" />
+
+    <Compile Include="..\..\script\run.mli" />
+
+    <Compile Include="..\..\host\spectest.ml" />
+
+    <Compile Include="..\..\main\main.ml" />
+
+    <Compile Include="..\..\main\main.ml" />
+
+    <Compile Include="..\..\util\error.mli" />
+
+    <Compile Include="..\..\script\script.ml" />
+
+    <Compile Include="..\..\binary\decode.mli" />
+
+    <Compile Include="..\..\binary\encode.mli" />
+
+    <Compile Include="..\..\script\js.mli" />
+
+    <Compile Include="..\..\text\parse.mli" />
+
+    <Compile Include="..\..\text\print.mli" />
+
+    <Compile Include="..\..\valid\valid.mli" />
+
+    <Compile Include="..\..\host\env.ml" />
+
+    <Compile Include="..\..\main\flags.ml" />
+
+    <Compile Include="..\..\script\import.ml" />
+
+    <Compile Include="..\..\script\run.ml" />
+
+    <Compile Include="..\..\host\spectest.ml" />
+
+    <Compile Include="..\..\binary\utf8.ml" />
+
+    <Compile Include="..\..\exec\eval_numeric.mli" />
+
+    <Compile Include="..\..\exec\i64_convert.mli" />
+
+    <Compile Include="..\..\exec\eval.ml" />
+
+    <Compile Include="..\..\runtime\func.ml" />
+
+    <Compile Include="..\..\runtime\instance.ml" />
+
+    <Compile Include="..\..\util\source.ml" />
+
+    <Compile Include="..\..\syntax\types.ml" />
+
+    <Compile Include="..\..\syntax\values.ml" />
+
+    <Compile Include="..\..\exec\f32_convert.mli" />
+
+    <Compile Include="..\..\exec\f64_convert.mli" />
+
+    <Compile Include="..\..\exec\i32_convert.mli" />
+
+    <Compile Include="..\..\syntax\ast.ml" />
+
+    <Compile Include="..\..\util\error.ml" />
+
+    <Compile Include="..\..\exec\eval_numeric.ml" />
+
+    <Compile Include="..\..\runtime\global.ml" />
+
+    <Compile Include="..\..\exec\i32.ml" />
+
+    <Compile Include="..\..\exec\i64.ml" />
+
+    <Compile Include="..\..\exec\i64_convert.ml" />
+
+    <Compile Include="..\..\util\lib.ml" />
+
+    <Compile Include="..\..\runtime\memory.ml" />
+
+    <Compile Include="..\..\exec\numeric_error.ml" />
+
+    <Compile Include="..\..\runtime\table.ml" />
+
+    <Compile Include="..\..\exec\f32.ml" />
+
+    <Compile Include="..\..\exec\f64.ml" />
+
+    <Compile Include="..\..\exec\float.ml" />
+
+    <Compile Include="..\..\exec\int.ml" />
+
+    <Compile Include="..\..\exec\f32_convert.ml" />
+
+    <Compile Include="..\..\exec\f64_convert.ml" />
+
+    <Compile Include="..\..\exec\i32_convert.ml" />
+
+    <Compile Include="..\..\syntax\operators.ml" />
+
+    -->
+    <!--<Compile Include="..\..\text\parser.mly" />--><!--
+
+    <Compile Include="..\..\text\parser.mli" />
+
+    <Compile Include="..\..\text\lexer.mli" />
+
+    <Compile Include="..\..\util\sexpr.mli" />
+
+    <Compile Include="..\..\text\arrange.mli" />
+
+    <Compile Include="..\..\binary\decode.ml" />
+
+    <Compile Include="..\..\binary\encode.ml" />
+
+    <Compile Include="..\..\script\js.ml" />
+
+    <Compile Include="..\..\text\parse.ml" />
+
+    <Compile Include="..\..\text\print.ml" />
+
+    <Compile Include="..\..\script\script.ml" />
+
+    <Compile Include="..\..\valid\valid.ml" />
+
+    <Compile Include="..\..\syntax\operators.ml" />
+    --><!--<Compile Include="..\..\text\lexer.mll" />--><!--
+    <Compile Include="..\..\text\lexer.ml" />
+    <Compile Include="..\..\text\parser.ml" />
+    <Compile Include="..\..\text\arrange.ml" />
+    <Compile Include="..\..\util\sexpr.ml" />-->
+    <!--<Compile Include="..\..\main\main.d.byte" />-->
+    <Compile Include="Program.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="mscorlib" />
+    <Reference Include="FSharp.Core">
+      <Name>FSharp.Core</Name>
+      <AssemblyName>FSharp.Core.dll</AssemblyName>
+      <HintPath>$(MSBuildProgramFiles32)\Reference Assemblies\Microsoft\FSharp\.NETFramework\v4.0\$(TargetFSharpCoreVersion)\FSharp.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
+    <Reference Include="System.ValueTuple">
+      <HintPath>..\packages\System.ValueTuple.4.3.1\lib\netstandard1.0\System.ValueTuple.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

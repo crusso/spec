@@ -43,12 +43,14 @@ let string_of_values = function
 
 exception Value of value_type
 
+(*IF-OCAML*)
 module type ValueType =
 sig
   type t
   val to_value : t -> value
   val of_value : value -> t (* raise Value *)
 end
+(*ENDIF-OCAML*)
 
 module I32Value =
 struct

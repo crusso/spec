@@ -1,3 +1,4 @@
+(*IF-OCAML*)
 module type RepType =
 sig
   type t
@@ -282,3 +283,4 @@ struct
     require (s.[0] != '+' && s.[0] != '-');
     n
 end
+(*ENDIF-OCAML*)

@@ -1,5 +1,14 @@
 (* Types *)
 
+(*F#
+
+module Int32 =
+ struct
+    type t = int32
+ end
+
+F#*)
+
 type value_type = I32Type | I64Type | F32Type | F64Type
 type elem_type = AnyFuncType
 type stack_type = value_type list
@@ -81,9 +90,17 @@ let string_of_value_types = function
 let string_of_elem_type = function
   | AnyFuncType -> "anyfunc"
 
+(*IF-OCAML*)
 let string_of_limits {min; max} =
   I32.to_string_u min ^
   (match max with None -> "" | Some n -> " " ^ I32.to_string_u n)
+(*ENDIF-OCAML*)
+
+(*F#
+let string_of_limits ({min=min;max=max}) =
+  I32.to_string_u min ^
+  (match max with None -> "" | Some n -> " " ^ I32.to_string_u n)
+F#*)
 
 let string_of_memory_type = function
   | MemoryType lim -> string_of_limits lim

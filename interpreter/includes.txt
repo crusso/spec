@@ -1,0 +1,89 @@
+
+exec/numeric_error.ml
+exec/int.ml
+util/lib.mli
+exec/i32.ml
+exec/float.ml
+syntax/types.ml
+exec/f32.ml
+exec/f64.ml
+exec/i64.ml
+syntax/values.ml
+runtime/memory.mli
+util/source.mli
+syntax/ast.ml
+runtime/func.mli
+runtime/global.mli
+runtime/table.mli
+runtime/instance.ml
+exec/eval.mli
+binary/utf8.mli
+host/env.ml
+main/flags.ml
+script/import.mli
+script/run.mli
+host/spectest.ml
+fsc -a -g   --warnaserror+ --mlcompatibility  -I main -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I exec -o main/main.cmo main/main.ml
+fsc -a -g   --warnaserror+ --mlcompatibility  -g -I main -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I exec -o main/main.d.cmo main/main.ml
+fsc -a -g   --warnaserror+ --mlcompatibility  -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I main -I exec -o util/error.cmi util/error.mli
+fsc -a -g   --warnaserror+ --mlcompatibility  -I script -I util -I binary -I valid -I syntax -I runtime -I host -I text -I main -I exec -o script/script.cmo script/script.ml
+fsc -a -g   --warnaserror+ --mlcompatibility  -I binary -I util -I valid -I syntax -I runtime -I host -I script -I text -I main -I exec -o binary/decode.cmi binary/decode.mli
+fsc -a -g   --warnaserror+ --mlcompatibility  -I binary -I util -I valid -I syntax -I runtime -I host -I script -I text -I main -I exec -o binary/encode.cmi binary/encode.mli
+fsc -a -g   --warnaserror+ --mlcompatibility  -I script -I util -I binary -I valid -I syntax -I runtime -I host -I text -I main -I exec -o script/js.cmi script/js.mli
+fsc -a -g   --warnaserror+ --mlcompatibility  -I text -I util -I binary -I valid -I syntax -I runtime -I host -I script -I main -I exec -o text/parse.cmi text/parse.mli
+fsc -a -g   --warnaserror+ --mlcompatibility  -I text -I util -I binary -I valid -I syntax -I runtime -I host -I script -I main -I exec -o text/print.cmi text/print.mli
+fsc -a -g   --warnaserror+ --mlcompatibility  -I valid -I util -I binary -I syntax -I runtime -I host -I script -I text -I main -I exec -o valid/valid.cmi valid/valid.mli
+fsc -a -g   --warnaserror+ --mlcompatibility   -I host -I util -I binary -I valid -I syntax -I runtime -I script -I text -I main -I exec -o host/env.d.cmo host/env.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I main -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I exec -o main/flags.d.cmo main/flags.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I script -I util -I binary -I valid -I syntax -I runtime -I host -I text -I main -I exec -o script/import.d.cmo script/import.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I script -I util -I binary -I valid -I syntax -I runtime -I host -I text -I main -I exec -o script/run.d.cmo script/run.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I host -I util -I binary -I valid -I syntax -I runtime -I script -I text -I main -I exec -o host/spectest.d.cmo host/spectest.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I binary -I util -I valid -I syntax -I runtime -I host -I script -I text -I main -I exec -o binary/utf8.d.cmo binary/utf8.ml
+fsc -a -g   --warnaserror+ --mlcompatibility  -I exec -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I main -o exec/eval_numeric.cmi exec/eval_numeric.mli
+fsc -a -g   --warnaserror+ --mlcompatibility  -I exec -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I main -o exec/i64_convert.cmi exec/i64_convert.mli
+fsc -a -g   --warnaserror+ --mlcompatibility   -I exec -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I main -o exec/eval.d.cmo exec/eval.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I runtime -I util -I binary -I valid -I syntax -I host -I script -I text -I main -I exec -o runtime/func.d.cmo runtime/func.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I runtime -I util -I binary -I valid -I syntax -I host -I script -I text -I main -I exec -o runtime/instance.d.cmo runtime/instance.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I main -I exec -o util/source.d.cmo util/source.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I syntax -I util -I binary -I valid -I runtime -I host -I script -I text -I main -I exec -o syntax/types.d.cmo syntax/types.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I syntax -I util -I binary -I valid -I runtime -I host -I script -I text -I main -I exec -o syntax/values.d.cmo syntax/values.ml
+fsc -a -g   --warnaserror+ --mlcompatibility  -I exec -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I main -o exec/f32_convert.cmi exec/f32_convert.mli
+fsc -a -g   --warnaserror+ --mlcompatibility  -I exec -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I main -o exec/f64_convert.cmi exec/f64_convert.mli
+fsc -a -g   --warnaserror+ --mlcompatibility  -I exec -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I main -o exec/i32_convert.cmi exec/i32_convert.mli
+fsc -a -g   --warnaserror+ --mlcompatibility   -I syntax -I util -I binary -I valid -I runtime -I host -I script -I text -I main -I exec -o syntax/ast.d.cmo syntax/ast.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I main -I exec -o util/error.d.cmo util/error.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I exec -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I main -o exec/eval_numeric.d.cmo exec/eval_numeric.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I runtime -I util -I binary -I valid -I syntax -I host -I script -I text -I main -I exec -o runtime/global.d.cmo runtime/global.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I exec -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I main -o exec/i32.d.cmo exec/i32.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I exec -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I main -o exec/i64.d.cmo exec/i64.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I exec -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I main -o exec/i64_convert.d.cmo exec/i64_convert.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I main -I exec -o util/lib.d.cmo util/lib.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I runtime -I util -I binary -I valid -I syntax -I host -I script -I text -I main -I exec -o runtime/memory.d.cmo runtime/memory.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I exec -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I main -o exec/numeric_error.d.cmo exec/numeric_error.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I runtime -I util -I binary -I valid -I syntax -I host -I script -I text -I main -I exec -o runtime/table.d.cmo runtime/table.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I exec -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I main -o exec/f32.d.cmo exec/f32.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I exec -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I main -o exec/f64.d.cmo exec/f64.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I exec -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I main -o exec/float.d.cmo exec/float.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I exec -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I main -o exec/int.d.cmo exec/int.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I exec -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I main -o exec/f32_convert.d.cmo exec/f32_convert.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I exec -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I main -o exec/f64_convert.d.cmo exec/f64_convert.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I exec -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I main -o exec/i32_convert.d.cmo exec/i32_convert.ml
+fsc -a -g   --warnaserror+ --mlcompatibility  -I syntax -I util -I binary -I valid -I runtime -I host -I script -I text -I main -I exec -o syntax/operators.cmo syntax/operators.ml
+ocamlyacc text/parser.mly
+fsc -a -g   --warnaserror+ --mlcompatibility  -I text -I util -I binary -I valid -I syntax -I runtime -I host -I script -I main -I exec -o text/parser.cmi text/parser.mli
+fsc -a -g   --warnaserror+ --mlcompatibility  -I text -I util -I binary -I valid -I syntax -I runtime -I host -I script -I main -I exec -o text/lexer.cmi text/lexer.mli
+fsc -a -g   --warnaserror+ --mlcompatibility  -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I main -I exec -o util/sexpr.cmi util/sexpr.mli
+fsc -a -g   --warnaserror+ --mlcompatibility  -I text -I util -I binary -I valid -I syntax -I runtime -I host -I script -I main -I exec -o text/arrange.cmi text/arrange.mli
+fsc -a -g   --warnaserror+ --mlcompatibility   -I binary -I util -I valid -I syntax -I runtime -I host -I script -I text -I main -I exec -o binary/decode.d.cmo binary/decode.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I binary -I util -I valid -I syntax -I runtime -I host -I script -I text -I main -I exec -o binary/encode.d.cmo binary/encode.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I script -I util -I binary -I valid -I syntax -I runtime -I host -I text -I main -I exec -o script/js.d.cmo script/js.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I text -I util -I binary -I valid -I syntax -I runtime -I host -I script -I main -I exec -o text/parse.d.cmo text/parse.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I text -I util -I binary -I valid -I syntax -I runtime -I host -I script -I main -I exec -o text/print.d.cmo text/print.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I script -I util -I binary -I valid -I syntax -I runtime -I host -I text -I main -I exec -o script/script.d.cmo script/script.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I valid -I util -I binary -I syntax -I runtime -I host -I script -I text -I main -I exec -o valid/valid.d.cmo valid/valid.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I syntax -I util -I binary -I valid -I runtime -I host -I script -I text -I main -I exec -o syntax/operators.d.cmo syntax/operators.ml
+ocamllex.opt -q text/lexer.mll
+fsc -a -g   --warnaserror+ --mlcompatibility   -I text -I util -I binary -I valid -I syntax -I runtime -I host -I script -I main -I exec -o text/lexer.d.cmo text/lexer.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I text -I util -I binary -I valid -I syntax -I runtime -I host -I script -I main -I exec -o text/parser.d.cmo text/parser.ml
+fsc -a -g   --warnaserror+ --mlcompatibility   -I text -I util -I binary -I valid -I syntax -I runtime -I host -I script -I main -I exec -o text/arrange.d.cmo text/arrange.ml
+fsc -a -g   --warnaserror+ --mlcompatibility  -I util -I binary -I valid -I syntax -I runtime -I host -I script -I text -I main -I exec -o util/sexpr.d.cmo util/sexpr.ml

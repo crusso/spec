@@ -1,5 +1,6 @@
 (* Things that should be in the OCaml library... *)
 
+(*IF-OCAML
 module Fun :
 sig
   val repeat : int -> ('a -> unit) -> 'a -> unit
@@ -71,3 +72,4 @@ sig
   val split : string -> char -> string list
   val breakup : string -> int -> string list
 end
+ENDIF-OCAML*)

@@ -19,12 +19,12 @@ let pos s = !(s.pos)
 let eos s = (pos s = len s)
 
 let check n s = if pos s + n > len s then raise EOS
-let skip n s = check n s; s.pos := !(s.pos) + n
+let skip_ n s = check n s; s.pos := !(s.pos) + n
 
 let read s = Char.code (s.bytes.[!(s.pos)])
 let peek s = if eos s then None else Some (read s)
-let get s = check 1 s; let b = read s in skip 1 s; b
-let get_string n s = let i = pos s in skip n s; String.sub s.bytes i n
+let get_ s = check 1 s; let b = read s in skip_ 1 s; b
+let get_string_ n s = let i = pos s in skip_ n s; String.sub s.bytes i n
 
 
 (* Errors *)
@@ -62,9 +62,9 @@ let require b s pos msg = if not b then error s pos msg
 let guard f s =
   try f s with EOS -> error s (len s) "unexpected end of binary or function"
 
-let get = guard get
-let get_string n = guard (get_string n)
-let skip n = guard (skip n)
+let get = guard get_
+let get_string n = guard (get_string_ n)
+let skip n = guard (skip_ n)
 
 let expect b s msg = require (guard get s = b) s (pos s - 1) msg
 let illegal s pos b = error s pos ("illegal opcode " ^ string_of_byte b)
@@ -467,13 +467,36 @@ and instr_block' s es =
   | _ ->
     let pos = pos s in
     let e' = instr s in
-    instr_block' s (Source.(e' @@ region s pos pos) :: es)
+    instr_block' s ((Source.(@@) e' (region s pos pos)) :: es)
 
-let const s =
+ (*IF-OCAML*)
+ let const s =
+(*ENDIF-OCAML*)
+(*F#
+let ``const`` s =
+F#*)
   let c = at instr_block s in
   end_ s;
   c
 
+(*IF-OCAML*)
+=
+(*ENDIF-OCAML*)
+(*F#
+type section =
+     | CustomSection
+     | TypeSection
+     | ImportSection
+     | FuncSection
+     | TableSection
+     | MemorySection
+     | GlobalSection
+     | ExportSection
+     | StartSection
+     | ElemSection
+     | CodeSection
+     | DataSection
+F#*)
 
 (* Sections *)
 
@@ -481,6 +504,7 @@ let id s =
   let bo = peek s in
   Lib.Option.map
     (function
+ (*IF-OCAML*)
     | 0 -> `CustomSection
     | 1 -> `TypeSection
     | 2 -> `ImportSection
@@ -493,16 +517,31 @@ let id s =
     | 9 -> `ElemSection
     | 10 -> `CodeSection
     | 11 -> `DataSection
+(*ENDIF-OCAML*)
+(*F#
+    | 0 -> CustomSection
+    | 1 -> TypeSection
+    | 2 -> ImportSection
+    | 3 -> FuncSection
+    | 4 -> TableSection
+    | 5 -> MemorySection
+    | 6 -> GlobalSection
+    | 7 -> ExportSection
+    | 8 -> StartSection
+    | 9 -> ElemSection
+    | 10 -> CodeSection
+    | 11 -> DataSection
+F#*)
     | _ -> error s (pos s) "invalid section id"
     ) bo
 
-let section_with_size tag f default s =
+let section_with_size tag f default_ s =
   match id s with
   | Some tag' when tag' = tag -> ignore (u8 s); sized f s
-  | _ -> default
+  | _ -> default_
 
-let section tag f default s =
-  section_with_size tag (fun _ -> f) default s
+let section tag f default_ s =
+  section_with_size tag (fun _ -> f) default_ s
 
 
 (* Type section *)
@@ -510,7 +549,12 @@ let section tag f default s =
 let type_ s = at func_type s
 
 let type_section s =
+(*IF-OCAML*)
   section `TypeSection (vec type_) [] s
+(*ENDIF-OCAML*)
+(*F#
+  section TypeSection (vec type_) [] s
+F#*)
 
 
 (* Import section *)
@@ -527,40 +571,61 @@ let import s =
   let module_name = name s in
   let item_name = name s in
   let idesc = at import_desc s in
-  {module_name; item_name; idesc}
+  {module_name=module_name; item_name=item_name; idesc=idesc}
 
 let import_section s =
+(*IF-OCAML*)
   section `ImportSection (vec (at import)) [] s
+(*ENDIF-OCAML*)
+(*F#
+  section ImportSection (vec (at import)) [] s
+F#*)
+
+  
 
 
 (* Function section *)
 
 let func_section s =
+(*IF-OCAML*)
   section `FuncSection (vec (at var)) [] s
+(*ENDIF-OCAML*)
+(*F#
+  section FuncSection (vec (at var)) [] s
+F#*)
 
 
 (* Table section *)
 
 let table s =
   let ttype = table_type s in
-  {ttype}
+  {ttype=ttype}
 
 let table_section s =
+(*IF-OCAML*)
   section `TableSection (vec (at table)) [] s
+(*ENDIF-OCAML*)
+(*F#
+  section TableSection (vec (at table)) [] s
+F#*)
 
 
 (* Memory section *)
 
 let memory s =
   let mtype = memory_type s in
-  {mtype}
+  {mtype=mtype}
 
 let memory_section s =
+(*IF-OCAML*)
   section `MemorySection (vec (at memory)) [] s
-
+(*ENDIF-OCAML*)
+(*F#
+  section MemorySection (vec (at memory)) [] s
+F#*)
 
 (* Global section *)
-
+(*IF-OCAML*)
 let global s =
   let gtype = global_type s in
   let value = const s in
@@ -568,6 +633,18 @@ let global s =
 
 let global_section s =
   section `GlobalSection (vec (at global)) [] s
+(*ENDIF-OCAML*)
+(*F#
+let ``global`` s =
+  let gtype = global_type s in
+  let value = ``const`` s in
+  {gtype=gtype; value=value}
+
+let global_section s =
+  section GlobalSection (vec (at ``global``)) [] s
+F#*)
+
+
 
 
 (* Export section *)
@@ -583,17 +660,26 @@ let export_desc s =
 let export s =
   let name = name s in
   let edesc = at export_desc s in
-  {name; edesc}
+  {name=name; edesc=edesc}
 
 let export_section s =
+(*IF-OCAML*)
   section `ExportSection (vec (at export)) [] s
+(*ENDIF-OCAML*)
+(*F#
+  section ExportSection (vec (at export)) [] s
+F#*)
 
 
 (* Start section *)
 
 let start_section s =
+(*IF-OCAML*)
   section `StartSection (opt (at var) true) None s
-
+(*ENDIF-OCAML*)
+(*F#
+  section StartSection (opt (at var) true) None s
+F#*)
 
 (* Code section *)
 
@@ -606,26 +692,45 @@ let code _ s =
   let locals = List.flatten (vec local s) in
   let body = instr_block s in
   end_ s;
-  {locals; body; ftype = Source.((-1l) @@ Source.no_region)}
+  {locals=locals; body=body; ftype = Source.(@@) (-1l) (Source.no_region)}
 
 let code_section s =
-  section `CodeSection (vec (at (sized code))) [] s
-
+ 
+(*IF-OCAML*)
+ section `CodeSection (vec (at (sized code))) [] s
+(*ENDIF-OCAML*)
+(*F#
+ section CodeSection (vec (at (sized code))) [] s
+F#*)
 
 (* Element section *)
 
+ (*IF-OCAML*)
 let segment dat s =
   let index = at var s in
   let offset = const s in
   let init = dat s in
   {index; offset; init}
+(*ENDIF-OCAML*)
+(*F#
+let segment dat s =
+  let index = at var s in
+  let offset = ``const`` s in
+  let init = dat s in
+  {index=index; offset=offset; init=init}
+F#*)
+
 
 let table_segment s =
   segment (vec (at var)) s
 
 let elem_section s =
-  section `ElemSection (vec (at table_segment)) [] s
-
+(*IF-OCAML*)
+ section `ElemSection (vec (at table_segment)) [] s
+(*ENDIF-OCAML*)
+(*F#
+ section ElemSection (vec (at table_segment)) [] s
+F#*)
 
 (* Data section *)
 
@@ -633,8 +738,12 @@ let memory_segment s =
   segment string s
 
 let data_section s =
+(*IF-OCAML*)
   section `DataSection (vec (at memory_segment)) [] s
-
+(*ENDIF-OCAML*)
+(*F#
+ section DataSection (vec (at memory_segment)) [] s
+F#*)
 
 (* Custom section *)
 
@@ -645,8 +754,12 @@ let custom size s =
   true
 
 let custom_section s =
+(*IF-OCAML*)
   section_with_size `CustomSection custom false s
-
+(*ENDIF-OCAML*)
+(*F#
+  section_with_size CustomSection custom false s
+F#*)
 
 (* Modules *)
 
@@ -684,9 +797,9 @@ let module_ s =
   require (List.length func_types = List.length func_bodies)
     s (len s) "function and code section have inconsistent lengths";
   let funcs =
-    List.map2 Source.(fun t f -> {f.it with ftype = t} @@ f.at)
+    List.map2 (fun t (f:func' Source.phrase) -> Source.(@@) {f.it with ftype = t}  f.at)
       func_types func_bodies
-  in {types; tables; memories; globals; funcs; imports; exports; elems; data; start}
+  in {types=types; tables=tables; memories=memories; globals=globals; funcs=funcs; imports=imports; exports=exports; elems=elems; data=data; start=start}
 
 
 let decode name bs = at module_ (stream name bs)

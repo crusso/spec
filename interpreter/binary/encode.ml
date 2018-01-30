@@ -1,12 +1,30 @@
 (* Version *)
+(*F# 
+open FSharp.Compatibility.OCaml 
+F#*)
 
 let version = 1l
 
 
 (* Errors *)
 
+(*IF-OCAML*)
 module Code = Error.Make ()
 exception Code = Code.Error
+(*ENDIF-OCAML*)
+(*F#
+module Errors = struct
+module Code =
+struct
+  exception Error of Source.region * string
+  let warn at m = prerr_endline (Source.string_of_region at ^ ": warning: " ^ m)
+  let error at m = raise (Error (at, m))
+end
+end
+
+open Errors
+exception Code = Code.Error
+F#*)
 
 
 (* Encoding stream *)

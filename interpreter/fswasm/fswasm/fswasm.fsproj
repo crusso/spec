@@ -154,15 +154,15 @@
     
     <Compile Include="..\..\syntax\operators.ml" />
 
+    <Compile Include="..\..\binary\encode.mli" />
+
+    <Compile Include="..\..\binary\encode.ml" />
+    
     <Compile Include="..\..\binary\decode.mli" />
 
     <Compile Include="..\..\binary\decode.ml" />
 
 
-    <Compile Include="..\..\binary\encode.mli" />
-
-
-    <Compile Include="..\..\binary\encode.ml" />
     
     <!--
     <Compile Include="..\..\host\env.ml" />

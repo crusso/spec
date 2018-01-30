@@ -1,6 +1,9 @@
 exception Utf8
+(*F#
+open FSharp.Compatibility.OCaml
+F#*)
 
-let con n = 0x80 lor (n land 0x3f)
+let con_ n = 0x80 lor (n land 0x3f)
 
 let rec encode ns = Lib.String.implode (List.map Char.chr (encode' ns))
 and encode' = function
@@ -10,11 +13,11 @@ and encode' = function
   | n::ns when n < 0x80 ->
     n :: encode' ns
   | n::ns when n < 0x800 ->
-    0xc0 lor (n lsr 6) :: con n :: encode' ns
+    0xc0 lor (n lsr 6) :: con_ n :: encode' ns
   | n::ns when n < 0x10000 ->
-    0xe0 lor (n lsr 12) :: con (n lsr 6) :: con n :: encode' ns
+    0xe0 lor (n lsr 12) :: con_ (n lsr 6) :: con_ n :: encode' ns
   | n::ns when n < 0x110000 ->
-    0xf0 lor (n lsr 18) :: con (n lsr 12) :: con (n lsr 6) :: con n
+    0xf0 lor (n lsr 18) :: con_ (n lsr 12) :: con_ (n lsr 6) :: con_ n
     :: encode' ns
   | _ ->
     raise Utf8

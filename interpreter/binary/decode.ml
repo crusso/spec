@@ -1,4 +1,7 @@
 (* Decoding stream *)
+(*F#
+open FSharp.Compatibility.OCaml 
+F#*)
 
 type stream =
 {
@@ -9,7 +12,7 @@ type stream =
 
 exception EOS
 
-let stream name bs = {name; bytes = bs; pos = ref 0}
+let stream name bs = {name=name; bytes = bs; pos = ref 0}
 
 let len s = String.length s.bytes
 let pos s = !(s.pos)
@@ -26,14 +29,32 @@ let get_string n s = let i = pos s in skip n s; String.sub s.bytes i n
 
 (* Errors *)
 
+
+
+(*IF-OCAML*)
 module Code = Error.Make ()
 exception Code = Code.Error
+(*ENDIF-OCAML*)
+(*F#
+module Errors = struct
+module Code =
+struct
+  exception Error of Source.region * string
+  let warn at m = prerr_endline (Source.string_of_region at ^ ": warning: " ^ m)
+  let error at m = raise (Error (at, m))
+end
+end
+
+open Errors
+exception Code = Code.Error
+F#*)
+
 
 let string_of_byte b = Printf.sprintf "%02x" b
 
-let position s pos = Source.({file = s.name; line = -1; column = pos})
+let position s pos = {Source.file = s.name; Source.line = -1; Source.column = pos}
 let region s left right =
-  Source.({left = position s left; right = position s right})
+  {Source.left = position s left;Source.right = position s right}
 
 let error s pos msg = raise (Code (region s pos pos, msg))
 let require b s pos msg = if not b then error s pos msg
@@ -52,7 +73,7 @@ let at f s =
   let left = pos s in
   let x = f s in
   let right = pos s in
-  Source.(x @@ region s left right)
+  Source.(@@) x (region s left right)
 
 
 
@@ -69,19 +90,19 @@ let u16 s =
 let u32 s =
   let lo = Int32.of_int (u16 s) in
   let hi = Int32.of_int (u16 s) in
-  Int32.(add lo (shift_left hi 16))
+  Int32.add lo (Int32.shift_left hi 16)
 
 let u64 s =
   let lo = I64_convert.extend_u_i32 (u32 s) in
   let hi = I64_convert.extend_u_i32 (u32 s) in
-  Int64.(add lo (shift_left hi 32))
+  Int64.add lo (Int64.shift_left hi 32)
 
 let rec vuN n s =
   require (n > 0) s (pos s) "integer representation too long";
   let b = u8 s in
   require (n >= 7 || b land 0x7f < 1 lsl n) s (pos s - 1) "integer too large";
   let x = Int64.of_int (b land 0x7f) in
-  if b land 0x80 = 0 then x else Int64.(logor x (shift_left (vuN (n - 7) s) 7))
+  if b land 0x80 = 0 then x else Int64.logor x (Int64.shift_left (vuN (n - 7) s) 7)
 
 let rec vsN n s =
   require (n > 0) s (pos s) "integer representation too long";
@@ -91,8 +112,8 @@ let rec vsN n s =
     "integer too large";
   let x = Int64.of_int (b land 0x7f) in
   if b land 0x80 = 0
-  then (if b land 0x40 = 0 then x else Int64.(logor x (logxor (-1L) 0x7fL)))
-  else Int64.(logor x (shift_left (vsN (n - 7) s) 7))
+  then (if b land 0x40 = 0 then x else Int64.logor x (Int64.logxor (-1L) 0x7fL))
+  else Int64.logor x (Int64.shift_left (vsN (n - 7) s) 7)
 
 let vu1 s = Int64.to_int (vuN 1 s)
 let vu32 s = Int64.to_int32 (vuN 32 s)
@@ -161,7 +182,7 @@ let limits vu s =
   let has_max = bool s in
   let min = vu s in
   let max = opt vu has_max s in
-  {min; max}
+  {min=min; max=max}
 
 let table_type s =
   let t = elem_type s in
@@ -239,7 +260,12 @@ let rec instr s =
     let xs = vec (at var) s in
     let x = at var s in
     br_table xs x
+(*IF-OCAML*)
   | 0x0f -> return
+(*ENDIF-OCAML*)
+(*F#
+  | 0x0f -> ``return``
+F#*)
 
   | 0x10 -> call (at var s)
   | 0x11 ->

@@ -18,7 +18,13 @@ let loop ts es = Loop (ts, es)
 let br x = Br x
 let br_if x = BrIf x
 let br_table xs x = BrTable (xs, x)
+
+(*IF-OCAML*)
 let return = Return
+(*ENDIF-OCAML*)
+(*F#
+let ``return`` = Return
+F#*)
 let if_ ts es1 es2 = If (ts, es1, es2)
 let select = Select
 

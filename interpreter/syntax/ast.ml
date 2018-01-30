@@ -16,6 +16,11 @@
  * These conventions mostly follow standard practice in language semantics.
  *)
 
+ (*F#
+open FSharp.Compatibility.OCaml
+F#*)
+
+
 open Types
 
 
@@ -38,6 +43,9 @@ struct
   type unop = Neg | Abs | Ceil | Floor | Trunc | Nearest | Sqrt
   type binop = Add | Sub | Mul | Div | Min | Max | CopySign
   type testop
+  (*F#
+  = unit // FSharp types can't be emtpy
+  F#*)
   type relop = Eq | Ne | Lt | Gt | Le | Ge
   type cvtop = ConvertSI32 | ConvertUI32 | ConvertSI64 | ConvertUI64
              | PromoteF32 | DemoteF64
@@ -100,15 +108,27 @@ and instr' =
 
 
 (* Globals & Functions *)
-
+(*IF-OCAML*)
 type const = instr list Source.phrase
-
 type global = global' Source.phrase
 and global' =
 {
   gtype : global_type;
   value : const;
 }
+(*ENDIF-OCAML*)
+(*F#
+type ``const`` = instr list Source.phrase
+type ``global`` = global' Source.phrase
+and global' =
+{
+  gtype : global_type;
+  value : ``const``;
+}
+F#*)
+
+
+
 
 type func = func' Source.phrase
 and func' =
@@ -137,7 +157,12 @@ type 'data segment = 'data segment' Source.phrase
 and 'data segment' =
 {
   index : var;
+(*IF-OCAML*)
   offset : const;
+(*ENDIF-OCAML*)
+(*F#
+  offset : ``const``;
+F#*)
   init : 'data;
 }
 
@@ -182,7 +207,12 @@ type module_ = module_' Source.phrase
 and module_' =
 {
   types : type_ list;
+(*IF-OCAML*)
   globals : global list;
+(*ENDIF-OCAML*)
+(*F#
+  globals : ``global`` list;
+F#*)
   tables : table list;
   memories : memory list;
   funcs : func list;
@@ -216,7 +246,12 @@ let func_type_for (m : module_) (x : var) : func_type =
   (Lib.List32.nth m.it.types x.it).it
 
 let import_type (m : module_) (im : import) : extern_type =
+(*IF-OCAML*)
   let {idesc; _} = im.it in
+(*ENDIF-OCAML*)
+(*F#
+  let {idesc=idesc} = im.it in
+F#*)
   match idesc.it with
   | FuncImport x -> ExternFuncType (func_type_for m x)
   | TableImport t -> ExternTableType t
@@ -224,9 +259,14 @@ let import_type (m : module_) (im : import) : extern_type =
   | GlobalImport t -> ExternGlobalType t
 
 let export_type (m : module_) (ex : export) : extern_type =
+(*IF-OCAML*)
   let {edesc; _} = ex.it in
+(*ENDIF-OCAML*)
+(*F#
+  let {edesc=edesc} = ex.it in
+F#*)
   let its = List.map (import_type m) m.it.imports in
-  let open Lib.List32 in
+  let nth = Lib.List32.nth in
   match edesc.it with
   | FuncExport x ->
     let fts =

@@ -1,4 +1,11 @@
+(*IF-OCAML*)
+(*ENDIF-OCAML*)
 (*F#
+F#*)
+
+
+(*F#
+
 module Int32 =
 struct
 
@@ -16,12 +23,27 @@ struct
     let of_int (i:int32) = (int64) i
     let of_int32 (i:int) = (int64) i
     let to_int (i:int64) = (int) i
+
+    let to_int32 (i:int64) = (int32) i
+    let add (i:int64) (j:int64) = i + j
+    let mul (i:int64) (j:int64) = i * j
+    let div (i:int64) (j:int64) = i / j
+    let shift_left (i:int64) (j:int) = i <<< j
+    let shift_right (i:int64) (j:int) = i >>> j
+    let logor (i:int64) (j:int64) = i ||| j
 end
 
 let max_int = Int32.max_int
 
-let Invalid_argument s = new System.ArgumentException(s) //TBR
-
+let  Invalid_argument s = new System.ArgumentException(s) //TBR
+let (| Invalid_argument|_|) (e:exn) = match e with 
+                                | :? System.ArgumentException as e -> Some e.Message
+                                | _ -> None
+(*TODO
+let (| Out_of_memory |) (e:exn) = match e with 
+                                | :? System.ArgumentException as e -> Some ()
+                                | _ -> None
+*)
 module Buffer =
     struct 
           type t = System.Text.StringBuilder
@@ -30,6 +52,12 @@ module Buffer =
           let contents (b:t) = b.ToString()
    end
 
+module Char =
+   struct
+        //TBR
+        let chr (byte:int) = (char) byte
+        let code (c:char) = (int) c
+   end
 
 F#*)
 
@@ -61,6 +89,8 @@ struct
   let is_power_of_two n =
     if n < 0 then failwith "is_power_of_two";
     n <> 0 && n &&& (n - 1) = 0 //TBR
+
+  let logand (i:int) (j:int) = i &&& j
 F#*)
 end
 
@@ -233,13 +263,21 @@ end
 module Bigarray =
 struct
 
+  // dummy values
+  type int8_unsigned_elt = Int8_unsigned
+  type c_layout = C_layout
+
   module Array1 =
   struct
+    // probably the wrong semantics here - Ocaml sub  returns a shared slice
     type ('a,'b,'c) t  = Array1 of 'a []
     let dim<'a,'b,'c> (Array1 a: ('a,'b,'c) t) = a.Length
     let get (Array1 a) i = a.[i]
     let set (Array1 a) i v = a.[i] <- v
-    let sub (Array1 a) i n = Array1 (Array.sub a i n)
+    let sub (Array1 a) i n = failwith "NTY Array1.sub"; //TODO
+                             Array1 (Array.sub a i n) 
+    let fill (Array1 a) v = Array.fill a 0 a.Length v 
+    let blit (Array1 a) (Array1 b)  = Array.blit a 0 b 0 a.Length
   end
 
   module Array1_64 =
@@ -247,7 +285,7 @@ struct
     let create kind layout n =
       if n < 0L || n > Int64.of_int max_int then
         raise (Invalid_argument "Bigarray.Array1_64.create");
-      Array.create (* kind layout *) (Int64.to_int n)
+      Array1.Array1 (Array.create (* kind layout *) (Int64.to_int n) (Unchecked.defaultof<_>))
 
     let dim a = Int64.of_int (Array1.dim a)
 

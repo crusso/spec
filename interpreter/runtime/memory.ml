@@ -1,5 +1,11 @@
+
+(*IF-OCAML*)
 open Bigarray
+(*ENDIF-OCAML*)
 open Lib.Bigarray
+
+
+open Lib
 open Types
 open Values
 
@@ -34,21 +40,21 @@ let within_limits n = function
 let create n =
   if I32.gt_u n 0x10000l then raise SizeOverflow else
   try
-    let size = Int64.(mul (of_int32 n) page_size) in
+    let size = Int64.mul (Int64.of_int32 n) page_size in
     let mem = Array1_64.create Int8_unsigned C_layout size in
     Array1.fill mem 0;
     mem
   with Out_of_memory -> raise OutOfMemory
 
-let alloc (MemoryType {min; max}) =
+let alloc (MemoryType {min=min; max=max}) =
   assert (within_limits min max);
-  {content = create min; max}
+  {content = create min; max = max}
 
 let bound mem =
   Array1_64.dim mem.content
 
 let size mem =
-  Int64.(to_int32 (div (bound mem) page_size))
+  Int64.to_int32 (Int64.div (bound mem) page_size)
 
 let type_of mem =
   MemoryType {min = size mem; max = mem.max}
@@ -72,17 +78,17 @@ let store_byte mem a b =
 let load_bytes mem a n =
   let buf = Buffer.create n in
   for i = 0 to n - 1 do
-    Buffer.add_char buf (Char.chr (load_byte mem Int64.(add a (of_int i))))
+    Buffer.add_char buf (Char.chr (load_byte mem (Int64.add a (Int64.of_int i))))
   done;
   Buffer.contents buf
 
 let store_bytes mem a bs =
   for i = String.length bs - 1 downto 0 do
-    store_byte mem Int64.(add a (of_int i)) (Char.code bs.[i])
+    store_byte mem (Int64.add a (Int64.of_int i)) (Char.code bs.[i])
   done
 
 let effective_address a o =
-  let ea = Int64.(add a (of_int32 o)) in
+  let ea = Int64.add a (Int64.of_int32 o) in
   if I64.lt_u ea a then raise Bounds;
   ea
 
@@ -90,7 +96,7 @@ let loadn mem a o n =
   assert (n > 0 && n <= 8);
   let rec loop a n =
     if n = 0 then 0L else begin
-      let x = Int64.(shift_left (loop (add a 1L) (n - 1)) 8) in
+      let x = Int64.shift_left (loop (Int64.add a 1L) (n - 1)) 8 in
       Int64.logor (Int64.of_int (load_byte mem a)) x
     end
   in loop (effective_address a o) n
@@ -99,8 +105,8 @@ let storen mem a o n x =
   assert (n > 0 && n <= 8);
   let rec loop a n x =
     if n > 0 then begin
-      Int64.(loop (add a 1L) (n - 1) (shift_right x 8));
-      store_byte mem a (Int64.to_int x land 0xff)
+      loop (Int64.add a 1L) (n - 1) (Int64.shift_right x 8);
+      store_byte mem a (Int.logand (Int64.to_int x) 0xff)
     end
   in loop (effective_address a o) n x
 
@@ -123,9 +129,9 @@ let store_value mem a o v =
 
 let extend x n = function
   | ZX -> x
-  | SX -> let sh = 64 - 8 * n in Int64.(shift_right (shift_left x sh) sh)
+  | SX -> let sh = 64 - 8 * n in Int64.shift_right (Int64.shift_left x sh) sh
 
-let load_packed sz ext mem a o t =
+let load_packed sz ext mem a o t : Values.value =
   assert (mem_size sz <= Types.size t);
   let n = mem_size sz in
   let x = extend (loadn mem a o n) n ext in
@@ -134,7 +140,7 @@ let load_packed sz ext mem a o t =
   | I64Type -> I64 x
   | _ -> raise Type
 
-let store_packed sz mem a o v =
+let store_packed sz mem a o (v:Values.value) =
   assert (mem_size sz <= Types.size (Values.type_of v));
   let n = mem_size sz in
   let x =

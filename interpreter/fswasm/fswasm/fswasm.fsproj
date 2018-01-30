@@ -58,51 +58,96 @@
     <Compile Include="AssemblyInfo.fs" />
     <None Include="App.config" />
     <Content Include="packages.config" />
-   
-    <Compile Include="..\..\exec\numeric_error.ml" />
-
-   <Compile Include="..\..\exec\int.ml" />
-
-   <!--<Compile Include="..\..\util\lib.mli" />-->
-
-    <Compile Include="..\..\util\lib.ml" />
+    <Compile Include="..\..\exec\numeric_error.ml">
+      <Link>numeric_error.ml</Link>
+    </Compile>
+    <Compile Include="..\..\exec\int.ml">
+      <Link>int.ml</Link>
+    </Compile>
+    <!--<Compile Include="..\..\util\lib.mli" />-->
+    <Compile Include="..\..\util\lib.ml">
+      <Link>lib.ml</Link>
+    </Compile>
+    <Compile Include="..\..\exec\i32.ml">
+      <Link>i32.ml</Link>
+    </Compile>
+    <Compile Include="..\..\exec\float.ml">
+      <Link>float.ml</Link>
+    </Compile>
+    <Compile Include="..\..\syntax\types.ml">
+      <Link>types.ml</Link>
+    </Compile>
+    <Compile Include="..\..\exec\f32.ml">
+      <Link>f32.ml</Link>
+    </Compile>
+    <Compile Include="..\..\exec\i64.ml">
+      <Link>i64.ml</Link>
+    </Compile>
+    <Compile Include="..\..\exec\f64.ml">
+      <Link>f64.ml</Link>
+    </Compile>
+    <Compile Include="..\..\syntax\values.ml">
+      <Link>values.ml</Link>
+    </Compile>
+    <Compile Include="..\..\runtime\memory.mli">
+      <Link>memory.mli</Link>
+    </Compile>
+    <Compile Include="..\..\runtime\memory.ml">
+      <Link>memory.ml</Link>
+    </Compile>
+    <Compile Include="..\..\util\source.mli">
+      <Link>source.mli</Link>
+    </Compile>
+    <Compile Include="..\..\util\source.ml">
+      <Link>source.ml</Link>
+    </Compile>
     
-    <Compile Include="..\..\exec\i32.ml" />
- 
-    <Compile Include="..\..\exec\float.ml" />
-   
-    <Compile Include="..\..\syntax\types.ml" />
-    
- 
-    <Compile Include="..\..\exec\f32.ml" />
-
-    <Compile Include="..\..\exec\i64.ml" />
-    
-    <Compile Include="..\..\exec\f64.ml" />
-
-
-
-    <Compile Include="..\..\syntax\values.ml" />
-
-
-<!-- <Compile Include="..\..\runtime\memory.mli" /> 
-
-    <Compile Include="..\..\util\source.mli" />
-
     <Compile Include="..\..\syntax\ast.ml" />
 
     <Compile Include="..\..\runtime\func.mli" />
-
+    
+    <Compile Include="..\..\runtime\func.ml" />
+    
     <Compile Include="..\..\runtime\global.mli" />
 
+     <Compile Include="..\..\runtime\global.ml" />
+
     <Compile Include="..\..\runtime\table.mli" />
--->
+    
+    <Compile Include="..\..\runtime\table.ml" />
+
 
     <Compile Include="..\..\runtime\instance.ml" />
 
-<!--
+
+    <Compile Include="..\..\exec\i64_convert.mli" />
+    <Compile Include="..\..\exec\i64_convert.ml" />
+    
+ 
+
+    <Compile Include="..\..\exec\i32_convert.mli" />
+    <Compile Include="..\..\exec\i32_convert.ml" />
+    
+    <Compile Include="..\..\exec\f64_convert.mli" />
+    <Compile Include="..\..\exec\f64_convert.ml" />
+
+    <Compile Include="..\..\exec\f32_convert.mli" />
+    <Compile Include="..\..\exec\f32_convert.ml" />
+
+
+
+
+
+    <Compile Include="..\..\exec\eval_numeric.mli" />
+    
+    <Compile Include="..\..\exec\eval_numeric.ml" />
+    
     <Compile Include="..\..\exec\eval.mli" />
 
+
+    <Compile Include="..\..\exec\eval.ml" />
+
+    <!--
     <Compile Include="..\..\binary\utf8.mli" />
 
     <Compile Include="..\..\host\env.ml" />
@@ -163,11 +208,6 @@
 
     <Compile Include="..\..\syntax\values.ml" />
 
-    <Compile Include="..\..\exec\f32_convert.mli" />
-
-    <Compile Include="..\..\exec\f64_convert.mli" />
-
-    <Compile Include="..\..\exec\i32_convert.mli" />
 
     <Compile Include="..\..\syntax\ast.ml" />
 
@@ -181,7 +221,7 @@
 
     <Compile Include="..\..\exec\i64.ml" />
 
-    <Compile Include="..\..\exec\i64_convert.ml" />
+  
 
     <Compile Include="..\..\util\lib.ml" />
 
@@ -208,7 +248,8 @@
     <Compile Include="..\..\syntax\operators.ml" />
 
     -->
-    <!--<Compile Include="..\..\text\parser.mly" />--><!--
+    <!--<Compile Include="..\..\text\parser.mly" />-->
+    <!--
 
     <Compile Include="..\..\text\parser.mli" />
 
@@ -233,7 +274,9 @@
     <Compile Include="..\..\valid\valid.ml" />
 
     <Compile Include="..\..\syntax\operators.ml" />
-    --><!--<Compile Include="..\..\text\lexer.mll" />--><!--
+    -->
+    <!--<Compile Include="..\..\text\lexer.mll" />-->
+    <!--
     <Compile Include="..\..\text\lexer.ml" />
     <Compile Include="..\..\text\parser.ml" />
     <Compile Include="..\..\text\arrange.ml" />
@@ -242,6 +285,9 @@
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="FSharp.Compatibility.OCaml">
+      <HintPath>..\packages\FSharp.Compatibility.OCaml.0.1.12\lib\net40\FSharp.Compatibility.OCaml.dll</HintPath>
+    </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core">
       <Name>FSharp.Core</Name>

@@ -1,8 +1,17 @@
 open Types
 open Values
 
+(*IF-OCAML*)
 type global = {mutable content : value; mut : mutability}
 type t = global
+(*ENDIF-OCAML*)
+(*F#
+type ``global`` = {mutable content : value; mut : mutability}
+type t = ``global``
+F#*)
+
+
+
 
 exception Type
 exception NotMutable

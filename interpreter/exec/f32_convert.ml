@@ -1,11 +1,14 @@
 (* WebAssembly-compatible type conversions to f32 implementation *)
+(*F#
+open FSharp.Compatibility.OCaml
+F#*)
 
 let demote_f64 x =
   let xf = F64.to_float x in
   if xf = xf then F32.of_float xf else
   let nan64bits = F64.to_bits x in
-  let sign_field = Int64.(shift_left (shift_right_logical nan64bits 63) 31) in
-  let significand_field = Int64.(shift_right_logical (shift_left nan64bits 12) 41) in
+  let sign_field = Int64.shift_left (Int64.shift_right_logical nan64bits 63) 31 in
+  let significand_field = Int64.shift_right_logical (Int64.shift_left nan64bits 12) 41 in
   let fields = Int64.logor sign_field significand_field in
   let nan32bits = Int32.logor 0x7fc00000l (I32_convert.wrap_i64 fields) in
   F32.of_bits nan32bits
@@ -20,8 +23,8 @@ let convert_s_i32 x =
  *)
 let convert_u_i32 x =
   F32.of_float
-    Int32.(if x >= zero then to_float x else
-           to_float (logor (shift_right_logical x 1) (logand x 1l)) *. 2.0)
+          (if x >= Int32.zero then Int32.to_float x else
+           Int32.to_float (Int32.logor (Int32.shift_right_logical x 1) (Int32.logand x 1l)) *. 2.0)
 
 let convert_s_i64 x =
   F32.of_float (Int64.to_float x)
@@ -36,6 +39,6 @@ let convert_u_i64 x =
   F32.of_float (if x >= Int64.zero then
     Int64.to_float x
   else
-    Int64.(to_float (shift_right_logical x 1) *. 2.0))
+    Int64.to_float (Int64.shift_right_logical x 1) *. 2.0)
 
-let reinterpret_i32 = F32.of_bits
+let reinterpret_i32 (i:I32.t) = F32.of_bits i

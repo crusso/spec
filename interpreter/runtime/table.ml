@@ -1,10 +1,23 @@
 open Types
 
+(*F#
+open FSharp.Compatibility.OCaml
+F#*)
+
 type size = int32
 type index = int32
 
+(*IF-OCAML*)
 type elem = ..
 type elem += Uninitialized
+(*ENDIF-OCAML*)
+(*F#
+open Lib
+type elem = obj //YUCK
+let Uninitialized = new obj()
+let tmp = Uninitialized
+let (|Uninitialized|_|) (e:obj) = if e == tmp then FSharp.Core.Option.Some () else  FSharp.Core.Option.None
+F#*)
 
 type table' = elem array
 type table =
@@ -23,9 +36,9 @@ let create size =
   try Lib.Array32.make size Uninitialized
   with Invalid_argument _ -> raise Out_of_memory
 
-let alloc (TableType ({min; max}, elem_type)) =
+let alloc (TableType ({min=min; max=max}, elem_type)) =
   assert (within_limits min max);
-  {content = create min; max; elem_type}
+  {content = create min; max=max; elem_type=elem_type}
 
 let size tab =
   Lib.Array32.length tab.content

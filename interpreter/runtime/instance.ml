@@ -1,3 +1,6 @@
+(*F#
+open FSharp.Compatibility.OCaml
+F#*)
 open Types
 
 type module_inst =
@@ -14,17 +17,33 @@ and func_inst = module_inst ref Func.t
 and table_inst = Table.t
 and memory_inst = Memory.t
 and global_inst = Global.t
+
+
+
+(*IF-OCAML*)
 and export_inst = Ast.name * extern
 
 and extern =
+(*ENDIF-OCAML*)
+(*F#
+and export_inst = Ast.name * ``extern``
+
+and ``extern`` =
+F#*)
   | ExternFunc of func_inst
   | ExternTable of table_inst
   | ExternMemory of memory_inst
   | ExternGlobal of global_inst
-
+(*IF-OCAML*)
 type Table.elem += FuncElem of func_inst
-
-
+(*ENDIF-OCAML*)
+(*F#
+type FuncElem = FuncElem of func_inst
+let (|FuncElem|_|) (o:Table.elem) = match o with 
+      | :? FuncElem as funcelem  -> let (FuncElem fi) = funcelem in Some fi
+      | _ -> None
+let FuncElem fi = (FuncElem fi) :> Table.elem
+F#*)
 (* Auxiliary functions *)
 
 let empty_module_inst =

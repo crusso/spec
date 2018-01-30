@@ -11,7 +11,7 @@ let of_arg f n v =
 
 
 (* Int operators *)
-
+(*IF-OCAML*)
 module IntOp (IXX : Int.S) (Value : ValueType with type t = IXX.t) =
 struct
   open Ast.IntOp
@@ -67,10 +67,125 @@ end
 
 module I32Op = IntOp (I32) (Values.I32Value)
 module I64Op = IntOp (I64) (Values.I64Value)
+(*ENDIF-OCAML*)
+(*F#
+module I32Op =
+struct
+  module IXX = I32
+  module Value = Values.I32Value
+  open Ast.IntOp
+
+  let to_value = Value.to_value
+  let of_value = of_arg Value.of_value
+
+  let unop op =
+    let f = match op with
+      | Clz -> IXX.clz
+      | Ctz -> IXX.ctz
+      | Popcnt -> IXX.popcnt
+    in fun v -> to_value (f (of_value 1 v))
+
+  let binop op =
+    let f = match op with
+      | Add -> IXX.add
+      | Sub -> IXX.sub
+      | Mul -> IXX.mul
+      | DivS -> IXX.div_s
+      | DivU -> IXX.div_u
+      | RemS -> IXX.rem_s
+      | RemU -> IXX.rem_u
+      | And -> IXX.and_
+      | Or -> IXX.or_
+      | Xor -> IXX.xor
+      | Shl -> IXX.shl
+      | ShrU -> IXX.shr_u
+      | ShrS -> IXX.shr_s
+      | Rotl -> IXX.rotl
+      | Rotr -> IXX.rotr
+    in fun v1 v2 -> to_value (f (of_value 1 v1) (of_value 2 v2))
+
+  let testop op =
+    let f = match op with
+      | Eqz -> IXX.eqz
+    in fun v -> f (of_value 1 v)
+
+  let relop op =
+    let f = match op with
+      | Eq -> IXX.eq
+      | Ne -> IXX.ne
+      | LtS -> IXX.lt_s
+      | LtU -> IXX.lt_u
+      | LeS -> IXX.le_s
+      | LeU -> IXX.le_u
+      | GtS -> IXX.gt_s
+      | GtU -> IXX.gt_u
+      | GeS -> IXX.ge_s
+      | GeU -> IXX.ge_u
+    in fun v1 v2 -> f (of_value 1 v1) (of_value 2 v2)
+end
+
+module I64Op = 
+struct
+  module IXX =  I64
+  module Value = Values.I64Value
+  open Ast.IntOp
+
+  let to_value = Value.to_value
+  let of_value = of_arg Value.of_value
+
+  let unop op =
+    let f = match op with
+      | Clz -> IXX.clz
+      | Ctz -> IXX.ctz
+      | Popcnt -> IXX.popcnt
+    in fun v -> to_value (f (of_value 1 v))
+
+  let binop op =
+    let f = match op with
+      | Add -> IXX.add
+      | Sub -> IXX.sub
+      | Mul -> IXX.mul
+      | DivS -> IXX.div_s
+      | DivU -> IXX.div_u
+      | RemS -> IXX.rem_s
+      | RemU -> IXX.rem_u
+      | And -> IXX.and_
+      | Or -> IXX.or_
+      | Xor -> IXX.xor
+      | Shl -> IXX.shl
+      | ShrU -> IXX.shr_u
+      | ShrS -> IXX.shr_s
+      | Rotl -> IXX.rotl
+      | Rotr -> IXX.rotr
+    in fun v1 v2 -> to_value (f (of_value 1 v1) (of_value 2 v2))
+
+  let testop op =
+    let f = match op with
+      | Eqz -> IXX.eqz
+    in fun v -> f (of_value 1 v)
+
+  let relop op =
+    let f = match op with
+      | Eq -> IXX.eq
+      | Ne -> IXX.ne
+      | LtS -> IXX.lt_s
+      | LtU -> IXX.lt_u
+      | LeS -> IXX.le_s
+      | LeU -> IXX.le_u
+      | GtS -> IXX.gt_s
+      | GtU -> IXX.gt_u
+      | GeS -> IXX.ge_s
+      | GeU -> IXX.ge_u
+    in fun v1 v2 -> f (of_value 1 v1) (of_value 2 v2)
+end
+    
+ 
+F#*)
+
 
 
 (* Float operators *)
-
+(*IF-OCAML*)
 module FloatOp (FXX : Float.S) (Value : ValueType with type t = FXX.t) =
 struct
   open Ast.FloatOp
@@ -115,6 +230,98 @@ end
 
 module F32Op = FloatOp (F32) (Values.F32Value)
 module F64Op = FloatOp (F64) (Values.F64Value)
+(*ENDIF-OCAML*)
+(*F#
+module F32Op =
+struct
+  module FXX = F32
+  module Value = Values.F32Value
+  open Ast.FloatOp
+
+  let to_value = Value.to_value
+  let of_value = of_arg Value.of_value
+
+  let unop op =
+    let f = match op with
+      | Neg -> FXX.neg
+      | Abs -> FXX.abs
+      | Sqrt  -> FXX.sqrt
+      | Ceil -> FXX.ceil
+      | Floor -> FXX.floor
+      | Trunc -> FXX.trunc
+      | Nearest -> FXX.nearest
+    in fun v -> to_value (f (of_value 1 v))
+
+  let binop op =
+    let f = match op with
+      | Add -> FXX.add
+      | Sub -> FXX.sub
+      | Mul -> FXX.mul
+      | Div -> FXX.div
+      | Min -> FXX.min
+      | Max -> FXX.max
+      | CopySign -> FXX.copysign
+    in fun v1 v2 -> to_value (f (of_value 1 v1) (of_value 2 v2))
+
+  let testop (op:testop) = assert false (*F#; failwith "F32.testop" F#*)
+
+  let relop op =
+    let f = match op with
+      | Eq -> FXX.eq
+      | Ne -> FXX.ne
+      | Lt -> FXX.lt
+      | Le -> FXX.le
+      | Gt -> FXX.gt
+      | Ge -> FXX.ge
+    in fun v1 v2 -> f (of_value 1 v1) (of_value 2 v2)
+end
+
+module F64Op = 
+struct
+  module FXX = F64
+  module Value = Values.F64Value
+  open Ast.FloatOp
+
+  let to_value = Value.to_value
+  let of_value = of_arg Value.of_value
+
+  let unop op =
+    let f = match op with
+      | Neg -> FXX.neg
+      | Abs -> FXX.abs
+      | Sqrt  -> FXX.sqrt
+      | Ceil -> FXX.ceil
+      | Floor -> FXX.floor
+      | Trunc -> FXX.trunc
+      | Nearest -> FXX.nearest
+    in fun v -> to_value (f (of_value 1 v))
+
+  let binop op =
+    let f = match op with
+      | Add -> FXX.add
+      | Sub -> FXX.sub
+      | Mul -> FXX.mul
+      | Div -> FXX.div
+      | Min -> FXX.min
+      | Max -> FXX.max
+      | CopySign -> FXX.copysign
+    in fun v1 v2 -> to_value (f (of_value 1 v1) (of_value 2 v2))
+
+  let testop (op:testop) = assert false (*F#; failwith "F64.testop" F#*)
+
+  let relop op =
+    let f = match op with
+      | Eq -> FXX.eq
+      | Ne -> FXX.ne
+      | Lt -> FXX.lt
+      | Le -> FXX.le
+      | Gt -> FXX.gt
+      | Ge -> FXX.ge
+    in fun v1 v2 -> f (of_value 1 v1) (of_value 2 v2)
+end
+
+F#*)
+
 
 
 (* Conversion operators *)

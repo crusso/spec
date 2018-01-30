@@ -1,3 +1,6 @@
+(*F#
+open FSharp.Compatibility.OCaml 
+F#*)
 open Values
 open Types
 open Instance
@@ -7,15 +10,61 @@ open Source
 
 (* Errors *)
 
+(*IF-OCAML*)
 module Link = Error.Make ()
 module Trap = Error.Make ()
 module Crash = Error.Make ()
 module Exhaustion = Error.Make ()
 
+
 exception Link = Link.Error
 exception Trap = Trap.Error
 exception Crash = Crash.Error (* failure that cannot happen in valid code *)
 exception Exhaustion = Exhaustion.Error
+
+(*ENDIF-OCAML*)
+(*F#
+module Errors = struct
+module Link =
+struct
+  exception Error of Source.region * string
+  let warn at m = prerr_endline (Source.string_of_region at ^ ": warning: " ^ m)
+  let error at m = raise (Error (at, m))
+end
+
+module Trap = 
+struct
+  exception Error of Source.region * string
+  let warn at m = prerr_endline (Source.string_of_region at ^ ": warning: " ^ m)
+  let error at m = raise (Error (at, m))
+end
+
+module Crash =
+struct
+  exception Error of Source.region * string
+  let warn at m = prerr_endline (Source.string_of_region at ^ ": warning: " ^ m)
+  let error at m = raise (Error (at, m))
+end
+module Exhaustion =
+struct
+  exception Error of Source.region * string
+  let warn at m = prerr_endline (Source.string_of_region at ^ ": warning: " ^ m)
+  let error at m = raise (Error (at, m))
+end
+end
+open Errors
+exception Link = Link.Error
+exception Trap = Trap.Error
+exception Crash = Crash.Error 
+exception Exhaustion = Exhaustion.Error
+
+F#*)
+
+
+
+
+
+
 
 let memory_error at = function
   | Memory.Bounds -> "out of bounds memory access"
@@ -64,7 +113,7 @@ type config =
   budget : int;  (* needed to model stack overflow *)
 }
 
-let frame inst locals = {inst; locals}
+let frame inst locals = {inst=inst; locals=locals}
 let config inst vs es =
   {frame = frame inst []; code = vs, es; depth = 0; budget = 300}
 
@@ -78,9 +127,16 @@ let type_ (inst : module_inst) x = lookup "type" inst.types x
 let func (inst : module_inst) x = lookup "function" inst.funcs x
 let table (inst : module_inst) x = lookup "table" inst.tables x
 let memory (inst : module_inst) x = lookup "memory" inst.memories x
+(*IF-OCAML*)
 let global (inst : module_inst) x = lookup "global" inst.globals x
+(*ENDIF-OCAML*)
+(*F#
+let ``global`` (inst : module_inst) x = lookup "global" inst.globals x
+F#*)
+
 let local (frame : frame) x = lookup "local" frame.locals x
 
+(*IF-OCAML*)
 let elem inst x i at =
   match Table.load (table inst x) i with
   | Table.Uninitialized ->
@@ -88,6 +144,19 @@ let elem inst x i at =
   | f -> f
   | exception Table.Bounds ->
     Trap.error at ("undefined element " ^ Int32.to_string i)
+(*ENDIF-OCAML*)
+(*F#
+let elem inst x i at =
+  try 
+     (match Table.load (table inst x) i with
+     | :? FuncElem as f -> f 
+     | Table.Uninitialized ->
+        Trap.error at ("uninitialized element " ^ Int32.to_string i)
+     )
+  with Table.Bounds ->
+    Trap.error at ("undefined element " ^ Int32.to_string i)
+F#*)
+
 
 let func_elem inst x i at =
   match elem inst x i at with
@@ -113,7 +182,7 @@ let drop n (vs : 'a stack) at =
  *)
 
 let rec step (c : config) : config =
-  let {frame; code = vs, es; _} = c in
+  let {frame = frame ; code = vs, es; depth=_;budget= _} = c in
   let e = List.hd es in
   let vs', es' =
     match e.it, vs with
@@ -184,6 +253,8 @@ let rec step (c : config) : config =
         local frame x := v;
         v :: vs', []
 
+
+(*IF-OCAML*)
       | GetGlobal x, vs ->
         Global.load (global frame.inst x) :: vs, []
 
@@ -191,8 +262,17 @@ let rec step (c : config) : config =
         (try Global.store (global frame.inst x) v; vs', []
         with Global.NotMutable -> Crash.error e.at "write to immutable global"
            | Global.Type -> Crash.error e.at "type mismatch at global write")
+(*ENDIF-OCAML*)
+(*F#
+      | GetGlobal x, vs ->
+        Global.load (``global`` frame.inst x) :: vs, []
 
-      | Load {offset; ty; sz; _}, I32 i :: vs' ->
+      | SetGlobal x, v :: vs' ->
+        (try Global.store (``global`` frame.inst x) v; vs', []
+        with Global.NotMutable -> Crash.error e.at "write to immutable global"
+           | Global.Type -> Crash.error e.at "type mismatch at global write")
+F#*)
+      | Load {offset=offset; ty=ty; sz=sz; align=_}, I32 i :: vs' ->
         let mem = memory frame.inst (0l @@ e.at) in
         let addr = I64_convert.extend_u_i32 i in
         (try
@@ -203,7 +283,7 @@ let rec step (c : config) : config =
           in v :: vs', []
         with exn -> vs', [Trapped (memory_error e.at exn) @@ e.at])
 
-      | Store {offset; sz; _}, v :: I32 i :: vs' ->
+      | Store {offset=offset; ty=ty; sz=sz; align=_}, v :: I32 i :: vs' ->
         let mem = memory frame.inst (0l @@ e.at) in
         let addr = I64_convert.extend_u_i32 i in
         (try
@@ -258,6 +338,9 @@ let rec step (c : config) : config =
 
     | Trapped msg, vs ->
       assert false
+(*F#
+      ; failwith "assert"
+F#*)
 
     | Break (k, vs'), vs ->
       Crash.error e.at "undefined label"
@@ -265,13 +348,13 @@ let rec step (c : config) : config =
     | Label (ts, es0, (vs', [])), vs ->
       vs' @ vs, []
 
-    | Label (ts, es0, (vs', {it = Trapped msg; at} :: es')), vs ->
+    | Label (ts, es0, (vs', {it = Trapped msg; at=at} :: es')), vs ->
       vs, [Trapped msg @@ at]
 
-    | Label (ts, es0, (vs', {it = Break (0l, vs0); at} :: es')), vs ->
+    | Label (ts, es0, (vs', {it = Break (0l, vs0); at=at} :: es')), vs ->
       take (List.length ts) vs0 e.at @ vs, List.map plain es0
 
-    | Label (ts, es0, (vs', {it = Break (k, vs0); at} :: es')), vs ->
+    | Label (ts, es0, (vs', {it = Break (k, vs0); at=at} :: es')), vs ->
       vs, [Break (Int32.sub k 1l, vs0) @@ at]
 
     | Label (ts, es0, code'), vs ->
@@ -281,7 +364,7 @@ let rec step (c : config) : config =
     | Frame (frame', (vs', [])), vs ->
       vs' @ vs, []
 
-    | Frame (frame', (vs', {it = Trapped msg; at} :: es')), vs ->
+    | Frame (frame', (vs', {it = Trapped msg; at=at} :: es')), vs ->
       vs, [Trapped msg @@ at]
 
     | Frame (frame', code'), vs ->
@@ -292,7 +375,7 @@ let rec step (c : config) : config =
       Exhaustion.error e.at "call stack exhausted"
 
     | Invoke func, vs ->
-      let FuncType (ins, out) = Func.type_of func in
+      let (FuncType (ins, out)) = Func.type_of func in
       let n = List.length ins in
       let args, vs' = take n vs e.at, drop n vs e.at in
       (match func with
@@ -304,7 +387,7 @@ let rec step (c : config) : config =
 
       | Func.HostFunc (t, f) ->
         try List.rev (f (List.rev args)) @ vs', []
-        with Crash (_, msg) -> Crash.error e.at msg
+        with Crash.Error  (_, msg) -> Crash.error e.at msg
       )
   in {c with code = vs', es' @ List.tl es}
 
@@ -314,7 +397,7 @@ let rec eval (c : config) : value stack =
   | vs, [] ->
     vs
 
-  | vs, {it = Trapped msg; at} :: _ ->
+  | vs, {it = Trapped msg; at = at} :: _ ->
     Trap.error at msg
 
   | vs, es ->
@@ -325,18 +408,27 @@ let rec eval (c : config) : value stack =
 
 let invoke (func : func_inst) (vs : value list) : value list =
   let at = match func with Func.AstFunc (_,_, f) -> f.at | _ -> no_region in
-  let FuncType (ins, out) = Func.type_of func in
+  let (FuncType (ins, out)) = Func.type_of func in
   if List.length vs <> List.length ins then
     Crash.error at "wrong number of arguments";
   let c = config empty_module_inst (List.rev vs) [Invoke func @@ at] in
   try List.rev (eval c) with Stack_overflow ->
     Exhaustion.error at "call stack exhausted"
 
+(*IF-OCAML*)
 let eval_const (inst : module_inst) (const : const) : value =
   let c = config inst [] (List.map plain const.it) in
   match eval c with
   | [v] -> v
   | vs -> Crash.error const.at "wrong number of results on stack"
+(*ENDIF-OCAML*)
+(*F#
+let eval_const (inst : module_inst) (``const`` : ``const``) : value =
+  let c = config inst [] (List.map plain ``const``.it) in
+  match eval c with
+  | [v] -> v
+  | vs -> Crash.error ``const``.at "wrong number of results on stack"
+F#*)
 
 let i32 (v : value) at =
   match v with
@@ -350,26 +442,41 @@ let create_func (inst : module_inst) (f : func) : func_inst =
   Func.alloc (type_ inst f.it.ftype) (ref inst) f
 
 let create_table (inst : module_inst) (tab : table) : table_inst =
-  let {ttype} = tab.it in
+  let {ttype=ttype} = tab.it in
   Table.alloc ttype
 
 let create_memory (inst : module_inst) (mem : memory) : memory_inst =
-  let {mtype} = mem.it in
+  let {mtype=mtype} = mem.it in
   Memory.alloc mtype
 
+
+(*IF-OCAML*)
 let create_global (inst : module_inst) (glob : global) : global_inst =
-  let {gtype; value} = glob.it in
+  let {gtype=gtype; value=value} = glob.it in
   let v = eval_const inst value in
   Global.alloc gtype v
+(*ENDIF-OCAML*)
+(*F#
+let create_global (inst : module_inst) (glob : ``global``) : global_inst =
+  let {gtype=gtype; value=value} = glob.it in
+  let v = eval_const inst value in
+  Global.alloc gtype v
+F#*)
 
 let create_export (inst : module_inst) (ex : export) : export_inst =
-  let {name; edesc} = ex.it in
+  let {name=name; edesc=edesc} = ex.it in
   let ext =
     match edesc.it with
     | FuncExport x -> ExternFunc (func inst x)
     | TableExport x -> ExternTable (table inst x)
     | MemoryExport x -> ExternMemory (memory inst x)
-    | GlobalExport x -> ExternGlobal (global inst x)
+(*IF-OCAML*)
+  | GlobalExport x -> ExternGlobal (global inst x)
+(*ENDIF-OCAML*)
+(*F#
+  | GlobalExport x -> ExternGlobal (``global`` inst x)
+F#*)
+  
   in name, ext
 
 
@@ -379,10 +486,10 @@ let init_func (inst : module_inst) (func : func_inst) =
   | _ -> assert false
 
 let init_table (inst : module_inst) (seg : table_segment) =
-  let {index; offset = const; init} = seg.it in
+  let {index=index; offset = const_; init = init} = seg.it in
   let tab = table inst index in
-  let offset = i32 (eval_const inst const) const.at in
-  let end_ = Int32.(add offset (of_int (List.length init))) in
+  let offset = i32 (eval_const inst const_) const_.at in
+  let end_ = Int32.add offset (Int32.of_int (List.length init)) in
   let bound = Table.size tab in
   if I32.lt_u bound end_ || I32.lt_u end_ offset then
     Link.error seg.at "elements segment does not fit table";
@@ -390,18 +497,18 @@ let init_table (inst : module_inst) (seg : table_segment) =
     Table.blit tab offset (List.map (fun x -> FuncElem (func inst x)) init)
 
 let init_memory (inst : module_inst) (seg : memory_segment) =
-  let {index; offset = const; init} = seg.it in
+  let {index=index; offset = const_; init=init} = seg.it in
   let mem = memory inst index in
-  let offset' = i32 (eval_const inst const) const.at in
+  let offset' = i32 (eval_const inst const_) const_.at in
   let offset = I64_convert.extend_u_i32 offset' in
-  let end_ = Int64.(add offset (of_int (String.length init))) in
+  let end_ = Int64.add offset (Int64.of_int (String.length init)) in
   let bound = Memory.bound mem in
   if I64.lt_u bound end_ || I64.lt_u end_ offset then
     Link.error seg.at "data segment does not fit memory";
   fun () -> Memory.store_bytes mem offset init
 
 
-let add_import (m : module_) (ext : extern) (im : import) (inst : module_inst)
+let add_import (m : module_) (ext (* : extern *)) (im : import) (inst : module_inst)
   : module_inst =
   if not (match_extern_type (extern_type_of ext) (import_type m im)) then
     Link.error im.at "incompatible import type";
@@ -411,10 +518,10 @@ let add_import (m : module_) (ext : extern) (im : import) (inst : module_inst)
   | ExternMemory mem -> {inst with memories = mem :: inst.memories}
   | ExternGlobal glob -> {inst with globals = glob :: inst.globals}
 
-let init (m : module_) (exts : extern list) : module_inst =
+let init (m : module_) (exts  (* : extern list*) ) : module_inst =
   let
-    { imports; tables; memories; globals; funcs; types;
-      exports; elems; data; start
+    { imports = imports; tables=tables; memories=memories; globals=globals; funcs=funcs; types=types;
+      exports=exports; elems=elems; data=data; start=start
     } = m.it
   in
   if List.length exts <> List.length imports then

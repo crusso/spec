@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -13,6 +13,8 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <TargetFSharpCoreVersion>4.4.1.0</TargetFSharpCoreVersion>
     <Name>fswasm</Name>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -54,6 +56,7 @@
     </Otherwise>
   </Choose>
   <Import Project="$(FSharpTargetsPath)" />
+  <Import Project="..\..\fswasm\packages\FsLexYacc.7.0.6\build\FsLexYacc.targets" />
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
     <None Include="App.config" />
@@ -101,77 +104,110 @@
     <Compile Include="..\..\util\source.ml">
       <Link>source.ml</Link>
     </Compile>
-    
-    <Compile Include="..\..\syntax\ast.ml" />
-
-    <Compile Include="..\..\runtime\func.mli" />
-    
-    <Compile Include="..\..\runtime\func.ml" />
-    
-    <Compile Include="..\..\runtime\global.mli" />
-
-     <Compile Include="..\..\runtime\global.ml" />
-
-    <Compile Include="..\..\runtime\table.mli" />
-    
-    <Compile Include="..\..\runtime\table.ml" />
-
-
-    <Compile Include="..\..\runtime\instance.ml" />
-
-
-    <Compile Include="..\..\exec\i64_convert.mli" />
-    <Compile Include="..\..\exec\i64_convert.ml" />
-    
- 
-
-    <Compile Include="..\..\exec\i32_convert.mli" />
-    <Compile Include="..\..\exec\i32_convert.ml" />
-    
-    <Compile Include="..\..\exec\f64_convert.mli" />
-    <Compile Include="..\..\exec\f64_convert.ml" />
-
-    <Compile Include="..\..\exec\f32_convert.mli" />
-    <Compile Include="..\..\exec\f32_convert.ml" />
-
-
-
-
-
-    <Compile Include="..\..\exec\eval_numeric.mli" />
-    
-    <Compile Include="..\..\exec\eval_numeric.ml" />
-    
-    <Compile Include="..\..\exec\eval.mli" />
-
-
-    <Compile Include="..\..\exec\eval.ml" />
-
-    
-    <Compile Include="..\..\binary\utf8.mli" />
-
-    <Compile Include="..\..\binary\utf8.ml" />
-    
-    <Compile Include="..\..\syntax\operators.ml" />
-
-    <Compile Include="..\..\binary\encode.mli" />
-
-    <Compile Include="..\..\binary\encode.ml" />
-    
-    <Compile Include="..\..\binary\decode.mli" />
-
-    <Compile Include="..\..\binary\decode.ml" />
-
-    <Compile Include="..\..\valid\valid.mli" />
-             
-    <Compile Include="..\..\valid\valid.ml" />
-    
-    <Compile Include="..\..\host\env.ml" />
-
-    <Compile Include="..\..\main\flags.ml" />
-    
-    
-
+    <Compile Include="..\..\syntax\ast.ml">
+      <Link>ast.ml</Link>
+    </Compile>
+    <Compile Include="..\..\runtime\func.mli">
+      <Link>func.mli</Link>
+    </Compile>
+    <Compile Include="..\..\runtime\func.ml">
+      <Link>func.ml</Link>
+    </Compile>
+    <Compile Include="..\..\runtime\global.mli">
+      <Link>global.mli</Link>
+    </Compile>
+    <Compile Include="..\..\runtime\global.ml">
+      <Link>global.ml</Link>
+    </Compile>
+    <Compile Include="..\..\runtime\table.mli">
+      <Link>table.mli</Link>
+    </Compile>
+    <Compile Include="..\..\runtime\table.ml">
+      <Link>table.ml</Link>
+    </Compile>
+    <Compile Include="..\..\runtime\instance.ml">
+      <Link>instance.ml</Link>
+    </Compile>
+    <Compile Include="..\..\exec\i64_convert.mli">
+      <Link>i64_convert.mli</Link>
+    </Compile>
+    <Compile Include="..\..\exec\i64_convert.ml">
+      <Link>i64_convert.ml</Link>
+    </Compile>
+    <Compile Include="..\..\exec\i32_convert.mli">
+      <Link>i32_convert.mli</Link>
+    </Compile>
+    <Compile Include="..\..\exec\i32_convert.ml">
+      <Link>i32_convert.ml</Link>
+    </Compile>
+    <Compile Include="..\..\exec\f64_convert.mli">
+      <Link>f64_convert.mli</Link>
+    </Compile>
+    <Compile Include="..\..\exec\f64_convert.ml">
+      <Link>f64_convert.ml</Link>
+    </Compile>
+    <Compile Include="..\..\exec\f32_convert.mli">
+      <Link>f32_convert.mli</Link>
+    </Compile>
+    <Compile Include="..\..\exec\f32_convert.ml">
+      <Link>f32_convert.ml</Link>
+    </Compile>
+    <Compile Include="..\..\exec\eval_numeric.mli">
+      <Link>eval_numeric.mli</Link>
+    </Compile>
+    <Compile Include="..\..\exec\eval_numeric.ml">
+      <Link>eval_numeric.ml</Link>
+    </Compile>
+    <Compile Include="..\..\exec\eval.mli">
+      <Link>eval.mli</Link>
+    </Compile>
+    <Compile Include="..\..\exec\eval.ml">
+      <Link>eval.ml</Link>
+    </Compile>
+    <Compile Include="..\..\binary\utf8.mli">
+      <Link>utf8.mli</Link>
+    </Compile>
+    <Compile Include="..\..\binary\utf8.ml">
+      <Link>utf8.ml</Link>
+    </Compile>
+    <Compile Include="..\..\syntax\operators.ml">
+      <Link>operators.ml</Link>
+    </Compile>
+    <Compile Include="..\..\binary\encode.mli">
+      <Link>encode.mli</Link>
+    </Compile>
+    <Compile Include="..\..\binary\encode.ml">
+      <Link>encode.ml</Link>
+    </Compile>
+    <Compile Include="..\..\binary\decode.mli">
+      <Link>decode.mli</Link>
+    </Compile>
+    <Compile Include="..\..\binary\decode.ml">
+      <Link>decode.ml</Link>
+    </Compile>
+    <Compile Include="..\..\valid\valid.mli">
+      <Link>valid.mli</Link>
+    </Compile>
+    <Compile Include="..\..\valid\valid.ml">
+      <Link>valid.ml</Link>
+    </Compile>
+    <Compile Include="..\..\host\env.ml">
+      <Link>env.ml</Link>
+    </Compile>
+    <Compile Include="..\..\main\flags.ml">
+      <Link>flags.ml</Link>
+    </Compile>
+    <FsYacc Include="..\..\text\parser.fsy">
+      <OtherFlags>-o Parser.ml --module Parser</OtherFlags>
+      <Link>parser.fsy</Link>
+    </FsYacc>
+    <FsLex Include="..\..\text\lexer.fsl">
+      <OtherFlags>-o Lexer.ml --unicode</OtherFlags>
+      <Link>lexer.fsl</Link>
+    </FsLex>
+    <Compile Include="Parser.fsi" />
+    <Compile Include="Parser.ml" />
+    <Compile Include="Lexer.ml" />
     <!--
     <Compile Include="..\..\script\import.mli" />
 
@@ -302,17 +338,22 @@
     <Compile Include="..\..\util\sexpr.ml" />-->
     <!--<Compile Include="..\..\main\main.d.byte" />-->
     <Compile Include="Program.fs" />
+    <None Include="lexer.mll" />
+    <None Include="parser.fsy" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Compatibility.OCaml">
       <HintPath>..\packages\FSharp.Compatibility.OCaml.0.1.12\lib\net40\FSharp.Compatibility.OCaml.dll</HintPath>
     </Reference>
-    <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core">
-      <Name>FSharp.Core</Name>
-      <AssemblyName>FSharp.Core.dll</AssemblyName>
-      <HintPath>$(MSBuildProgramFiles32)\Reference Assemblies\Microsoft\FSharp\.NETFramework\v4.0\$(TargetFSharpCoreVersion)\FSharp.Core.dll</HintPath>
+      <HintPath>..\packages\FSharp.Core.3.1.2.5\lib\net40\FSharp.Core.dll</HintPath>
+      <Private>True</Private>
     </Reference>
+    <Reference Include="FsLexYacc.Runtime">
+      <HintPath>..\packages\FsLexYacc.Runtime.7.0.6\lib\portable-net45+netcore45+wpa81+wp8+MonoAndroid10+MonoTouch10\FsLexYacc.Runtime.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="mscorlib" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
@@ -320,6 +361,13 @@
       <HintPath>..\packages\System.ValueTuple.4.3.1\lib\netstandard1.0\System.ValueTuple.dll</HintPath>
     </Reference>
   </ItemGroup>
+  <Import Project="..\packages\FsLexYacc.7.0.6\build\FsLexYacc.targets" Condition="Exists('..\packages\FsLexYacc.7.0.6\build\FsLexYacc.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\FsLexYacc.7.0.6\build\FsLexYacc.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\FsLexYacc.7.0.6\build\FsLexYacc.targets'))" />
+  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

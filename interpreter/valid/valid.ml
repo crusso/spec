@@ -1,12 +1,34 @@
 open Ast
 open Source
 open Types
-
+(*F#
+open FSharp.Compatibility.OCaml 
+F#*)
 
 (* Errors *)
 
+(*IF-OCAML*)
 module Invalid = Error.Make ()
 exception Invalid = Invalid.Error
+(*ENDIF-OCAML*)
+(*F#
+module Errors = struct
+module Invalid =
+struct
+  exception Error of Source.region * string
+  let warn at m = prerr_endline (Source.string_of_region at ^ ": warning: " ^ m)
+  let error at m = raise (Error (at, m))
+end
+end
+
+open Errors
+exception Invalid = Invalid.Error
+
+module I32Op = Ast.IntOp
+module I64Op = Ast.IntOp
+module F32Op = Ast.FloatOp
+module F64Op = Ast.FloatOp
+F#*)
 
 let error = Invalid.error
 let require b at s = if not b then error at s
@@ -38,7 +60,12 @@ let type_ (c : context) x = lookup "type" c.types x
 let func (c : context) x = lookup "function" c.funcs x
 let table (c : context) x = lookup "table" c.tables x
 let memory (c : context) x = lookup "memory" c.memories x
+(*IF-OCAML*)
 let global (c : context) x = lookup "global" c.globals x
+(*ENDIF-OCAML*)
+(*F#
+let ``global`` (c : context) x = lookup "global" c.globals x
+F#*)
 let local (c : context) x = lookup "local" c.locals x
 let label (c : context) x = lookup "label" c.labels x
 
@@ -99,7 +126,7 @@ let type_unop = Values.type_of
 let type_binop = Values.type_of
 let type_testop = Values.type_of
 let type_relop = Values.type_of
-
+(*IF-OCAML*)
 let type_cvtop at = function
   | Values.I32 cvtop ->
     let open I32Op in
@@ -133,7 +160,38 @@ let type_cvtop at = function
     | PromoteF32 -> F32Type
     | DemoteF64 -> error at "invalid conversion"
     ), F64Type
-
+(*ENDIF-OCAML*)
+(*F#
+let type_cvtop at = function
+  | Values.I32 cvtop ->
+    (match cvtop with
+    | I32Op.ExtendSI32 | I32Op.ExtendUI32 -> error at "invalid conversion"
+    | I32Op.WrapI64 -> I64Type
+    | I32Op.TruncSF32 | I32Op.TruncUF32 | I32Op.ReinterpretFloat -> F32Type
+    | I32Op.TruncSF64 | I32Op.TruncUF64 -> F64Type
+    ), I32Type
+  | Values.I64 cvtop ->
+    (match cvtop with
+    | I64Op.ExtendSI32 | I64Op.ExtendUI32 -> I32Type
+    | I64Op.WrapI64 -> error at "invalid conversion"
+    | I64Op.TruncSF32 | I64Op.TruncUF32 -> F32Type
+    | I64Op.TruncSF64 | I64Op.TruncUF64 | I64Op.ReinterpretFloat -> F64Type
+    ), I64Type
+  | Values.F32 cvtop ->
+    (match cvtop with
+    | F32Op.ConvertSI32 | F32Op.ConvertUI32 | F32Op.ReinterpretInt -> I32Type
+    | F32Op.ConvertSI64 | F32Op.ConvertUI64 -> I64Type
+    | F32Op.PromoteF32 -> error at "invalid conversion"
+    | F32Op.DemoteF64 -> F64Type
+    ), F32Type
+  | Values.F64 cvtop ->
+    (match cvtop with
+    | F64Op.ConvertSI32 | F64Op.ConvertUI32 -> I32Type
+    | F64Op.ConvertSI64 | F64Op.ConvertUI64 | F64Op.ReinterpretInt -> I64Type
+    | F64Op.PromoteF32 -> F32Type
+    | F64Op.DemoteF64 -> error at "invalid conversion"
+    ), F64Type
+F#*)
 
 (* Expressions *)
 
@@ -213,12 +271,12 @@ let rec check_instr (c : context) (e : instr) (s : infer_stack_type) : op_type =
     c.results -->... []
 
   | Call x ->
-    let FuncType (ins, out) = func c x in
+    let (FuncType (ins, out)) = func c x in
     ins --> out
 
   | CallIndirect x ->
     ignore (table c (0l @@ e.at));
-    let FuncType (ins, out) = type_ c x in
+    let (FuncType (ins, out)) = type_ c x in
     (ins @ [I32Type]) --> out
 
   | Drop ->
@@ -238,11 +296,21 @@ let rec check_instr (c : context) (e : instr) (s : infer_stack_type) : op_type =
     [local c x] --> [local c x]
 
   | GetGlobal x ->
+(*IF-OCAML*)
     let GlobalType (t, mut) = global c x in
+(*ENDIF-OCAML*)
+(*F#
+    let (GlobalType (t, mut)) = ``global`` c x in
+F#*)
     [] --> [t]
 
   | SetGlobal x ->
+(*IF-OCAML*)
     let GlobalType (t, mut) = global c x in
+(*ENDIF-OCAML*)
+(*F#
+    let (GlobalType (t, mut)) = ``global`` c x in
+F#*)
     require (mut = Mutable) x.at "global is immutable";
     [t] --> []
 
@@ -294,7 +362,7 @@ and check_seq (c : context) (es : instr list) : infer_stack_type =
   | _ ->
     let es', e = Lib.List.split_last es in
     let s = check_seq c es' in
-    let {ins; outs} = check_instr c e s in
+    let {ins=ins; outs=outs} = check_instr c e s in
     push outs (pop ins s e.at)
 
 and check_block (c : context) (es : instr list) (ts : stack_type) at =
@@ -307,7 +375,7 @@ and check_block (c : context) (es : instr list) (ts : stack_type) at =
 
 (* Types *)
 
-let check_limits {min; max} at =
+let check_limits {min=min; max=max} at =
   match max with
   | None -> ()
   | Some max ->
@@ -318,13 +386,13 @@ let check_value_type (t : value_type) at =
   ()
 
 let check_func_type (ft : func_type) at =
-  let FuncType (ins, out) = ft in
+  let (FuncType (ins, out)) = ft in
   List.iter (fun t -> check_value_type t at) ins;
   List.iter (fun t -> check_value_type t at) out;
   check_arity (List.length out) at
 
 let check_table_type (tt : table_type) at =
-  let TableType (lim, _) = tt in
+  let (TableType (lim, _)) = tt in
   check_limits lim at
 
 let check_memory_size (sz : I32.t) at =
@@ -332,13 +400,13 @@ let check_memory_size (sz : I32.t) at =
     "memory size must be at most 65536 pages (4GiB)"
 
 let check_memory_type (mt : memory_type) at =
-  let MemoryType lim = mt in
+  let (MemoryType lim) = mt in
   check_limits lim at;
   check_memory_size lim.min at;
   Lib.Option.app (fun max -> check_memory_size max at) lim.max
 
 let check_global_type (gt : global_type) at =
-  let GlobalType (t, mut) = gt in
+  let (GlobalType (t, mut)) = gt in
   check_value_type t at
 
 
@@ -360,12 +428,12 @@ let check_type (t : type_) =
   check_func_type t.it t.at
 
 let check_func (c : context) (f : func) =
-  let {ftype; locals; body} = f.it in
-  let FuncType (ins, out) = type_ c ftype in
+  let {ftype=ftype; locals=locals; body=body} = f.it in
+  let (FuncType (ins, out)) = type_ c ftype in
   let c' = {c with locals = ins @ locals; results = out; labels = [out]} in
   check_block c' body out f.at
 
-
+(*IF-OCAML*)
 let is_const (c : context) (e : instr) =
   match e.it with
   | Const _ -> true
@@ -376,33 +444,55 @@ let check_const (c : context) (const : const) (t : value_type) =
   require (List.for_all (is_const c) const.it) const.at
     "constant expression required";
   check_block c const.it [t] const.at
+(*ENDIF-OCAML*)
+(*F#
+let is_const (c : context) (e : instr) =
+  match e.it with
+  | Const _ -> true
+  | GetGlobal x -> let (GlobalType (_, mut)) = ``global`` c x in mut = Immutable
+  | _ -> false
+
+let check_const (c : context) (``const`` : ``const``) (t : value_type) =
+  require (List.for_all (is_const c) ``const``.it) ``const``.at
+    "constant expression required";
+  check_block c ``const``.it [t] ``const``.at
+F#*)
+
 
 
 (* Tables, Memories, & Globals *)
 
 let check_table (c : context) (tab : table) =
-  let {ttype} = tab.it in
+  let {ttype=ttype} = tab.it in
   check_table_type ttype tab.at
 
 let check_memory (c : context) (mem : memory) =
-  let {mtype} = mem.it in
+  let {mtype=mtype} = mem.it in
   check_memory_type mtype mem.at
 
 let check_elem (c : context) (seg : table_segment) =
-  let {index; offset; init} = seg.it in
+  let {index=index; offset=offset; init=init} = seg.it in
   check_const c offset I32Type;
   ignore (table c index);
   ignore (List.map (func c) init)
 
 let check_data (c : context) (seg : memory_segment) =
-  let {index; offset; init} = seg.it in
+  let {index=index; offset=offset; init=init} = seg.it in
   check_const c offset I32Type;
   ignore (memory c index)
 
+(*IF-OCAML*)
 let check_global (c : context) (glob : global) =
   let {gtype; value} = glob.it in
   let GlobalType (t, mut) = gtype in
   check_const c value t
+(*ENDIF-OCAML*)
+(*F#
+let check_global (c : context) (glob : ``global``) =
+  let {gtype=gtype; value=value} = glob.it in
+  let (GlobalType (t, mut)) = gtype in
+  check_const c value t
+F#*)
 
 
 (* Modules *)
@@ -414,7 +504,7 @@ let check_start (c : context) (start : var option) =
   ) start
 
 let check_import (im : import) (c : context) : context =
-  let {module_name = _; item_name = _; idesc} = im.it in
+  let {module_name = _; item_name = _; idesc=idesc} = im.it in
   match idesc.it with
   | FuncImport x ->
     {c with funcs = type_ c x :: c.funcs}
@@ -426,21 +516,39 @@ let check_import (im : import) (c : context) : context =
     {c with memories = mt :: c.memories}
   | GlobalImport gt ->
     check_global_type gt idesc.at;
-    let GlobalType (_, mut) = gt in
+    let (GlobalType (_, mut)) = gt in
     require (mut = Immutable) idesc.at
       "mutable globals cannot be imported (yet)";
     {c with globals = gt :: c.globals}
 
+
+
+(*IF-OCAML*)
 module NameSet = Set.Make(struct type t = Ast.name let compare = compare end)
+(*ENDIF-OCAML*)
+(*F#
+module NameSet = 
+    struct
+        type t = FSharp.Collections.Set<Ast.name>
+        let empty = Set.empty
+        let add name set = Set.add name set
+        let mem name set = Set.contains name set
+    end
+F#*)
 
 let check_export (c : context) (set : NameSet.t) (ex : export) : NameSet.t =
-  let {name; edesc} = ex.it in
+  let {name=name; edesc=edesc} = ex.it in
   (match edesc.it with
   | FuncExport x -> ignore (func c x)
   | TableExport x -> ignore (table c x)
   | MemoryExport x -> ignore (memory c x)
   | GlobalExport x ->
+(*IF-OCAML*)
     let GlobalType (_, mut) = global c x in
+(*ENDIF-OCAML*)
+(*F#
+    let (GlobalType (_, mut)) = ``global`` c x in
+F#*)
     require (mut = Immutable) edesc.at
       "mutable globals cannot be exported (yet)"
   );
@@ -449,8 +557,8 @@ let check_export (c : context) (set : NameSet.t) (ex : export) : NameSet.t =
 
 let check_module (m : module_) =
   let
-    { types; imports; tables; memories; globals; funcs; start; elems; data;
-      exports } = m.it
+    { types=types; imports=imports; tables=tables; memories=memories; globals=globals; funcs=funcs; start=start; elems=elems; data=data;
+      exports=exports } = m.it
   in
   let c0 =
     List.fold_right check_import imports

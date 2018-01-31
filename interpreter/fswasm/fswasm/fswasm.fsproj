@@ -162,13 +162,17 @@
 
     <Compile Include="..\..\binary\decode.ml" />
 
-
+    <Compile Include="..\..\valid\valid.mli" />
+             
+    <Compile Include="..\..\valid\valid.ml" />
     
-    <!--
     <Compile Include="..\..\host\env.ml" />
 
     <Compile Include="..\..\main\flags.ml" />
+    
+    
 
+    <!--
     <Compile Include="..\..\script\import.mli" />
 
     <Compile Include="..\..\script\run.mli" />
@@ -183,9 +187,9 @@
 
     <Compile Include="..\..\script\script.ml" />
 
-    <Compile Include="..\..\binary\decode.mli" />
+   // <Compile Include="..\..\binary\decode.mli" />
 
-    <Compile Include="..\..\binary\encode.mli" />
+    //<Compile Include="..\..\binary\encode.mli" />
 
     <Compile Include="..\..\script\js.mli" />
 
@@ -205,62 +209,62 @@
 
     <Compile Include="..\..\host\spectest.ml" />
 
-    <Compile Include="..\..\binary\utf8.ml" />
+    //<Compile Include="..\..\binary\utf8.ml" />
 
-    <Compile Include="..\..\exec\eval_numeric.mli" />
+    //<Compile Include="..\..\exec\eval_numeric.mli" />
 
-    <Compile Include="..\..\exec\i64_convert.mli" />
+    //<Compile Include="..\..\exec\i64_convert.mli" />
 
-    <Compile Include="..\..\exec\eval.ml" />
+    //<Compile Include="..\..\exec\eval.ml" />
 
-    <Compile Include="..\..\runtime\func.ml" />
+    //<Compile Include="..\..\runtime\func.ml" />
 
-    <Compile Include="..\..\runtime\instance.ml" />
+    //<Compile Include="..\..\runtime\instance.ml" />
 
-    <Compile Include="..\..\util\source.ml" />
+    //<Compile Include="..\..\util\source.ml" />
 
-    <Compile Include="..\..\syntax\types.ml" />
+    //<Compile Include="..\..\syntax\types.ml" />
 
-    <Compile Include="..\..\syntax\values.ml" />
+    //<Compile Include="..\..\syntax\values.ml" />
 
 
-    <Compile Include="..\..\syntax\ast.ml" />
+    //<Compile Include="..\..\syntax\ast.ml" />
 
     <Compile Include="..\..\util\error.ml" />
 
-    <Compile Include="..\..\exec\eval_numeric.ml" />
+    //<Compile Include="..\..\exec\eval_numeric.ml" />
 
-    <Compile Include="..\..\runtime\global.ml" />
+   // <Compile Include="..\..\runtime\global.ml" />
 
-    <Compile Include="..\..\exec\i32.ml" />
+    //<Compile Include="..\..\exec\i32.ml" />
 
-    <Compile Include="..\..\exec\i64.ml" />
+    //<Compile Include="..\..\exec\i64.ml" />
 
   
 
-    <Compile Include="..\..\util\lib.ml" />
+    //<Compile Include="..\..\util\lib.ml" />
 
-    <Compile Include="..\..\runtime\memory.ml" />
+    //<Compile Include="..\..\runtime\memory.ml" />
 
-    <Compile Include="..\..\exec\numeric_error.ml" />
+    //<Compile Include="..\..\exec\numeric_error.ml" />
 
-    <Compile Include="..\..\runtime\table.ml" />
+    //<Compile Include="..\..\runtime\table.ml" />
 
-    <Compile Include="..\..\exec\f32.ml" />
+    //<Compile Include="..\..\exec\f32.ml" />
 
-    <Compile Include="..\..\exec\f64.ml" />
+    //<Compile Include="..\..\exec\f64.ml" />
 
-    <Compile Include="..\..\exec\float.ml" />
+    //<Compile Include="..\..\exec\float.ml" />
 
-    <Compile Include="..\..\exec\int.ml" />
+    //<Compile Include="..\..\exec\int.ml" />
 
-    <Compile Include="..\..\exec\f32_convert.ml" />
+    //<Compile Include="..\..\exec\f32_convert.ml" />
 
-    <Compile Include="..\..\exec\f64_convert.ml" />
+    //<Compile Include="..\..\exec\f64_convert.ml" />
 
-    <Compile Include="..\..\exec\i32_convert.ml" />
+    //<Compile Include="..\..\exec\i32_convert.ml" />
 
-    <Compile Include="..\..\syntax\operators.ml" />
+    //<Compile Include="..\..\syntax\operators.ml" />
 
     -->
     <!--<Compile Include="..\..\text\parser.mly" />-->
@@ -274,9 +278,9 @@
 
     <Compile Include="..\..\text\arrange.mli" />
 
-    <Compile Include="..\..\binary\decode.ml" />
+    //<Compile Include="..\..\binary\decode.ml" />
 
-    <Compile Include="..\..\binary\encode.ml" />
+    //<Compile Include="..\..\binary\encode.ml" />
 
     <Compile Include="..\..\script\js.ml" />
 
@@ -286,9 +290,9 @@
 
     <Compile Include="..\..\script\script.ml" />
 
-    <Compile Include="..\..\valid\valid.ml" />
+    //<Compile Include="..\..\valid\valid.ml" />
 
-    <Compile Include="..\..\syntax\operators.ml" />
+    //<Compile Include="..\..\syntax\operators.ml" />
     -->
     <!--<Compile Include="..\..\text\lexer.mll" />-->
     <!--

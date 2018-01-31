@@ -194,6 +194,8 @@
     <Compile Include="..\..\host\env.ml">
       <Link>env.ml</Link>
     </Compile>
+    <Compile Include="..\..\script\script.ml" />
+    
     <Compile Include="..\..\main\flags.ml">
       <Link>flags.ml</Link>
     </Compile>

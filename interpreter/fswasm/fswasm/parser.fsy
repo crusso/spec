@@ -6,8 +6,6 @@ open Operators
 open Script
 (*F#
 open FSharp.Compatibility.OCaml 
-open Microsoft.FSharp.Text.Lexing
-open Microsoft.FSharp.Text.Parsing
 F#*)
 
 (* Error handling *)
@@ -22,9 +20,9 @@ let parse_error msg =
 (* Position handling *)
 
 let position_to_pos position =
-  { file = position.pos_fname;
-    line = position.pos_lnum;
-    column = position.pos_cnum - position.pos_bol
+  { file = position.Lexing.pos_fname;
+    line = position.Lexing.pos_lnum;
+    column = position.Lexing.pos_cnum - position.Lexing.pos_bol
   }
 
 let positions_to_region position1 position2 =
@@ -66,9 +64,8 @@ module VarMap =
 struct
 	type 'a t = FSharp.Collections.Map<string,'a>
 	let empty = FSharp.Collections.Map.empty
-	let find x m = FSharp.Collections.Map.find x m
-	let add x y m =  FSharp.Collections.Map.add x y m
-	let map f m = FSharp.Collections.Map.map (fun x y -> f y) m
+	let find e m = FSharp.Collections.Map.find m e
+	let add =  FSharp.Collections.Map.add
 end
 F#*)
 
@@ -595,7 +592,7 @@ memory_fields :
       mems, data, ims, $1 (MemoryExport x) c :: exs }
   | LPAR DATA string_list RPAR  /* Sugar */
     { fun c x at ->
-      let size = (Int32.div (Int32.add (Int32.of_int (String.length $3)) 65535l) 65536l) in
+      let size = Int32.(div (add (of_int (String.length $3)) 65535l) 65536l) in
       [{mtype = MemoryType {min = size; max = Some size}} @@ at],
       [{index = x;
         offset = [i32_const (0l @@ at) @@ at] @@ at; init = $3} @@ at],

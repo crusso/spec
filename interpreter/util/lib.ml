@@ -318,3 +318,8 @@ struct
     | Some x -> f x
     | None -> ()
 end
+
+module FSHACKS =
+struct
+        let charRCURLY = '}' // fslex barfs on this
+end

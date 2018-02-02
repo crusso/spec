@@ -6,7 +6,18 @@ open FSharp.Compatibility.OCaml
 open Microsoft.FSharp.Text.Lexing
 F#*)
 
-let lexeme lexbuf = LexBuffer.LexemeString(lexbuf)
+// Ocaml impedence matching
+module Lexing =
+struct
+	type lexbuf = LexBuffer<char>
+	let lexeme_start_p (lexbuf:lexbuf) = lexbuf.StartPos
+	let lexeme_end_p (lexbuf:lexbuf) = lexbuf.EndPos
+	let new_line (lexbuf:lexbuf) = //lexbuf.NextLine
+		lexbuf.EndPos <- lexbuf.EndPos.NextLine
+end
+
+
+let lexeme lexbuf = LexBuffer<char>.LexemeString(lexbuf)
 
 let convert_pos (pos:Position) =
   { Source.file = pos.pos_fname;
@@ -14,14 +25,14 @@ let convert_pos (pos:Position) =
     Source.column = pos.pos_cnum - pos.pos_bol
   }
 
-let region (lexbuf:LexBuf<_>) =
+let region (lexbuf:LexBuffer<_>) =
   let left = convert_pos (lexbuf.StartPos) in
   let right = convert_pos (lexbuf.EndPos) in
   {Source.left = left; Source.right = right}
 
 let error lexbuf msg = raise (Script.Syntax (region lexbuf, msg))
-let error_nest start lexbuf msg =
-  lexbuf.Lexing.lex_start_p <- start;
+let error_nest start (lexbuf:LexBuffer<_>) msg =
+  lexbuf.StartPos <- start;
   error lexbuf msg
 
 let string s =
@@ -38,7 +49,7 @@ let string s =
       | '\"' -> '\"'
       | 'u' ->
         let j = !i + 2 in
-        i := String.index_from s j RCURLY;
+        i := String.index_from s j  Lib.FSHACKS.charRCURLY;
         let n = int_of_string ("0x" ^ String.sub s j (!i - j)) in
         let bs = Utf8.encode [n] in
         Buffer.add_substring b bs 0 (String.length bs - 1);
@@ -62,7 +73,7 @@ let intop t i32 i64 =
   match t with
   | "i32" -> i32
   | "i64" -> i64
-  | _ -> assert false
+  | _ -> assert false;failwith "intop"
 
 let floatop t f32 f64 =
   match t with
@@ -166,13 +177,13 @@ rule token = parse
   | '"'character*['\x00'-'\x09''\x0b'-'\x1f''\x7f']
     { error lexbuf "illegal control character in string literal" }
   | '"'character*'\\'_
-    { error_nest (Lexing.lexeme_end_p lexbuf) lexbuf "illegal escape" }
+    { error_nest (lexbuf.EndPos) lexbuf "illegal escape" }
 
   | (nxx) { VALUE_TYPE (value_type (lexeme lexbuf)) }
   | (nxx)".const"
     { let token = lexeme lexbuf in 
       let t = token.Substring(0,token.Length-".const".Length) in
-      //let open Source in
+      let (@@) = Source.(@@) in
       CONST (numop t
         (fun s -> let n = I32.of_string s.it in
           i32_const (n @@ s.at), Values.I32 n)
@@ -225,7 +236,8 @@ rule token = parse
     { let token = lexeme lexbuf in
       let t = token.Substring(0,3) in
       let sz = token.Substring(t.Length+".load".Length-1,token.Length-(t.Length+".load".Length)-2) in
-      let s = token.Substring(token.Length-1,1) in
+      let s = //token.Substring(token.Length-1,1) in
+		token.[token.Length-1] in
       if t = "i32" && sz = "32" then error lexbuf "unknown operator";
       LOAD (fun a o ->
         intop t
@@ -419,7 +431,7 @@ rule token = parse
   | ";;"utf8_no_nl*eof { EOF }
   | ";;"utf8_no_nl*'\n' { Lexing.new_line lexbuf; token lexbuf }
   | ";;"utf8_no_nl* { token lexbuf (* causes error on following position *) }
-  | "(;" { comment (Lexing.lexeme_start_p lexbuf) lexbuf; token lexbuf }
+  | "(;" { comment (lexbuf.StartPos) lexbuf; token lexbuf }
  (* | space#'\n' { token lexbuf } *)
   | space_no_nl { token lexbuf }
   | '\n' { Lexing.new_line lexbuf; token lexbuf }
@@ -431,7 +443,7 @@ rule token = parse
 
 and comment start = parse
   | ";)" { () }
-  | "(;" { comment (Lexing.lexeme_start_p lexbuf) lexbuf; comment start lexbuf }
+  | "(;" { comment (lexbuf.StartPos) lexbuf; comment start lexbuf }
   | '\n' { Lexing.new_line lexbuf; comment start lexbuf }
   | eof { error_nest start lexbuf "unclosed comment" }
   | utf8 { comment start lexbuf }

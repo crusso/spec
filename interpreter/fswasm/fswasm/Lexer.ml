@@ -8,7 +8,18 @@ open FSharp.Compatibility.OCaml
 open Microsoft.FSharp.Text.Lexing
 F#*)
 
-let lexeme lexbuf = LexBuffer.LexemeString(lexbuf)
+// Ocaml impedence matching
+module Lexing =
+struct
+	type lexbuf = LexBuffer<char>
+	let lexeme_start_p (lexbuf:lexbuf) = lexbuf.StartPos
+	let lexeme_end_p (lexbuf:lexbuf) = lexbuf.EndPos
+	let new_line (lexbuf:lexbuf) = //lexbuf.NextLine
+		lexbuf.EndPos <- lexbuf.EndPos.NextLine
+end
+
+
+let lexeme lexbuf = LexBuffer<char>.LexemeString(lexbuf)
 
 let convert_pos (pos:Position) =
   { Source.file = pos.pos_fname;
@@ -16,14 +27,14 @@ let convert_pos (pos:Position) =
     Source.column = pos.pos_cnum - pos.pos_bol
   }
 
-let region (lexbuf:LexBuf<_>) =
+let region (lexbuf:LexBuffer<_>) =
   let left = convert_pos (lexbuf.StartPos) in
   let right = convert_pos (lexbuf.EndPos) in
   {Source.left = left; Source.right = right}
 
 let error lexbuf msg = raise (Script.Syntax (region lexbuf, msg))
-let error_nest start lexbuf msg =
-  lexbuf.Lexing.lex_start_p <- start;
+let error_nest start (lexbuf:LexBuffer<_>) msg =
+  lexbuf.StartPos <- start;
   error lexbuf msg
 
 let string s =
@@ -40,7 +51,7 @@ let string s =
       | '\"' -> '\"'
       | 'u' ->
         let j = !i + 2 in
-        i := String.index_from s j RCURLY;
+        i := String.index_from s j  Lib.FSHACKS.charRCURLY;
         let n = int_of_string ("0x" ^ String.sub s j (!i - j)) in
         let bs = Utf8.encode [n] in
         Buffer.add_substring b bs 0 (String.length bs - 1);
@@ -64,7 +75,7 @@ let intop t i32 i64 =
   match t with
   | "i32" -> i32
   | "i64" -> i64
-  | _ -> assert false
+  | _ -> assert false;failwith "intop"
 
 let floatop t f32 f64 =
   match t with
@@ -95,7 +106,7 @@ let ext e s u =
 
 let opt = Lib.Option.get
 
-# 98 "Lexer.ml"
+# 109 "Lexer.ml"
 let trans : uint16[] array = 
     [| 
     (* State 0 *)
@@ -1720,60 +1731,60 @@ and comment start (lexbuf : Microsoft.FSharp.Text.Lexing.LexBuffer<_>) = _fslex_
 and _fslex_token  _fslex_state lexbuf =
   match _fslex_tables.Interpret(_fslex_state,lexbuf) with
   | 0 -> ( 
-# 157 "..\..\text\lexer.fsl"
+# 168 "..\..\text\lexer.fsl"
                          LPAR 
-# 1725 "Lexer.ml"
+# 1736 "Lexer.ml"
           )
   | 1 -> ( 
-# 158 "..\..\text\lexer.fsl"
+# 169 "..\..\text\lexer.fsl"
                          RPAR 
-# 1730 "Lexer.ml"
+# 1741 "Lexer.ml"
           )
   | 2 -> ( 
-# 160 "..\..\text\lexer.fsl"
+# 171 "..\..\text\lexer.fsl"
                           NAT (lexeme lexbuf) 
-# 1735 "Lexer.ml"
+# 1746 "Lexer.ml"
           )
   | 3 -> ( 
-# 161 "..\..\text\lexer.fsl"
+# 172 "..\..\text\lexer.fsl"
                           INT (lexeme lexbuf) 
-# 1740 "Lexer.ml"
+# 1751 "Lexer.ml"
           )
   | 4 -> ( 
-# 162 "..\..\text\lexer.fsl"
+# 173 "..\..\text\lexer.fsl"
                            FLOAT (lexeme lexbuf) 
-# 1745 "Lexer.ml"
+# 1756 "Lexer.ml"
           )
   | 5 -> ( 
-# 164 "..\..\text\lexer.fsl"
+# 175 "..\..\text\lexer.fsl"
                             STRING (string (lexeme (lexbuf))) 
-# 1750 "Lexer.ml"
+# 1761 "Lexer.ml"
           )
   | 6 -> ( 
-# 165 "..\..\text\lexer.fsl"
+# 176 "..\..\text\lexer.fsl"
                                              error lexbuf "unclosed string literal" 
-# 1755 "Lexer.ml"
+# 1766 "Lexer.ml"
           )
   | 7 -> ( 
-# 167 "..\..\text\lexer.fsl"
+# 178 "..\..\text\lexer.fsl"
                      error lexbuf "illegal control character in string literal" 
-# 1760 "Lexer.ml"
+# 1771 "Lexer.ml"
           )
   | 8 -> ( 
-# 169 "..\..\text\lexer.fsl"
-                     error_nest (Lexing.lexeme_end_p lexbuf) lexbuf "illegal escape" 
-# 1765 "Lexer.ml"
+# 180 "..\..\text\lexer.fsl"
+                     error_nest (lexbuf.EndPos) lexbuf "illegal escape" 
+# 1776 "Lexer.ml"
           )
   | 9 -> ( 
-# 171 "..\..\text\lexer.fsl"
+# 182 "..\..\text\lexer.fsl"
                            VALUE_TYPE (value_type (lexeme lexbuf)) 
-# 1770 "Lexer.ml"
+# 1781 "Lexer.ml"
           )
   | 10 -> ( 
-# 173 "..\..\text\lexer.fsl"
+# 184 "..\..\text\lexer.fsl"
                      let token = lexeme lexbuf in 
                      let t = token.Substring(0,token.Length-".const".Length) in
-                     //let open Source in
+                     let (@@) = Source.(@@) in
                      CONST (numop t
                        (fun s -> let n = I32.of_string s.it in
                          i32_const (n @@ s.at), Values.I32 n)
@@ -1784,147 +1795,148 @@ and _fslex_token  _fslex_state lexbuf =
                        (fun s -> let n = F64.of_string s.it in
                          f64_const (n @@ s.at), Values.F64 n))
                    
-# 1787 "Lexer.ml"
+# 1798 "Lexer.ml"
           )
   | 11 -> ( 
-# 186 "..\..\text\lexer.fsl"
+# 197 "..\..\text\lexer.fsl"
                                ANYFUNC 
-# 1792 "Lexer.ml"
+# 1803 "Lexer.ml"
           )
   | 12 -> ( 
-# 187 "..\..\text\lexer.fsl"
+# 198 "..\..\text\lexer.fsl"
                            MUT 
-# 1797 "Lexer.ml"
+# 1808 "Lexer.ml"
           )
   | 13 -> ( 
-# 189 "..\..\text\lexer.fsl"
+# 200 "..\..\text\lexer.fsl"
                            NOP 
-# 1802 "Lexer.ml"
+# 1813 "Lexer.ml"
           )
   | 14 -> ( 
-# 190 "..\..\text\lexer.fsl"
+# 201 "..\..\text\lexer.fsl"
                                    UNREACHABLE 
-# 1807 "Lexer.ml"
+# 1818 "Lexer.ml"
           )
   | 15 -> ( 
-# 191 "..\..\text\lexer.fsl"
+# 202 "..\..\text\lexer.fsl"
                             DROP 
-# 1812 "Lexer.ml"
+# 1823 "Lexer.ml"
           )
   | 16 -> ( 
-# 192 "..\..\text\lexer.fsl"
+# 203 "..\..\text\lexer.fsl"
                              BLOCK 
-# 1817 "Lexer.ml"
+# 1828 "Lexer.ml"
           )
   | 17 -> ( 
-# 193 "..\..\text\lexer.fsl"
+# 204 "..\..\text\lexer.fsl"
                             LOOP 
-# 1822 "Lexer.ml"
+# 1833 "Lexer.ml"
           )
   | 18 -> ( 
-# 194 "..\..\text\lexer.fsl"
+# 205 "..\..\text\lexer.fsl"
                            END 
-# 1827 "Lexer.ml"
+# 1838 "Lexer.ml"
           )
   | 19 -> ( 
-# 195 "..\..\text\lexer.fsl"
+# 206 "..\..\text\lexer.fsl"
                           BR 
-# 1832 "Lexer.ml"
+# 1843 "Lexer.ml"
           )
   | 20 -> ( 
-# 196 "..\..\text\lexer.fsl"
+# 207 "..\..\text\lexer.fsl"
                              BR_IF 
-# 1837 "Lexer.ml"
+# 1848 "Lexer.ml"
           )
   | 21 -> ( 
-# 197 "..\..\text\lexer.fsl"
+# 208 "..\..\text\lexer.fsl"
                                 BR_TABLE 
-# 1842 "Lexer.ml"
+# 1853 "Lexer.ml"
           )
   | 22 -> ( 
-# 198 "..\..\text\lexer.fsl"
+# 209 "..\..\text\lexer.fsl"
                               RETURN 
-# 1847 "Lexer.ml"
+# 1858 "Lexer.ml"
           )
   | 23 -> ( 
-# 199 "..\..\text\lexer.fsl"
+# 210 "..\..\text\lexer.fsl"
                           IF 
-# 1852 "Lexer.ml"
+# 1863 "Lexer.ml"
           )
   | 24 -> ( 
-# 200 "..\..\text\lexer.fsl"
+# 211 "..\..\text\lexer.fsl"
                             THEN 
-# 1857 "Lexer.ml"
+# 1868 "Lexer.ml"
           )
   | 25 -> ( 
-# 201 "..\..\text\lexer.fsl"
+# 212 "..\..\text\lexer.fsl"
                             ELSE 
-# 1862 "Lexer.ml"
+# 1873 "Lexer.ml"
           )
   | 26 -> ( 
-# 202 "..\..\text\lexer.fsl"
+# 213 "..\..\text\lexer.fsl"
                               SELECT 
-# 1867 "Lexer.ml"
+# 1878 "Lexer.ml"
           )
   | 27 -> ( 
-# 203 "..\..\text\lexer.fsl"
+# 214 "..\..\text\lexer.fsl"
                             CALL 
-# 1872 "Lexer.ml"
+# 1883 "Lexer.ml"
           )
   | 28 -> ( 
-# 204 "..\..\text\lexer.fsl"
+# 215 "..\..\text\lexer.fsl"
                                      CALL_INDIRECT 
-# 1877 "Lexer.ml"
+# 1888 "Lexer.ml"
           )
   | 29 -> ( 
-# 206 "..\..\text\lexer.fsl"
+# 217 "..\..\text\lexer.fsl"
                                  GET_LOCAL 
-# 1882 "Lexer.ml"
+# 1893 "Lexer.ml"
           )
   | 30 -> ( 
-# 207 "..\..\text\lexer.fsl"
+# 218 "..\..\text\lexer.fsl"
                                  SET_LOCAL 
-# 1887 "Lexer.ml"
+# 1898 "Lexer.ml"
           )
   | 31 -> ( 
-# 208 "..\..\text\lexer.fsl"
+# 219 "..\..\text\lexer.fsl"
                                  TEE_LOCAL 
-# 1892 "Lexer.ml"
+# 1903 "Lexer.ml"
           )
   | 32 -> ( 
-# 209 "..\..\text\lexer.fsl"
+# 220 "..\..\text\lexer.fsl"
                                   GET_GLOBAL 
-# 1897 "Lexer.ml"
+# 1908 "Lexer.ml"
           )
   | 33 -> ( 
-# 210 "..\..\text\lexer.fsl"
+# 221 "..\..\text\lexer.fsl"
                                   SET_GLOBAL 
-# 1902 "Lexer.ml"
+# 1913 "Lexer.ml"
           )
   | 34 -> ( 
-# 213 "..\..\text\lexer.fsl"
+# 224 "..\..\text\lexer.fsl"
                      let token = lexeme lexbuf in 
                      let t = token.Substring(0,token.Length-".load".Length) in 
                      LOAD (fun a o ->
                        numop t (i32_load (opt a 2)) (i64_load (opt a 3))
                                (f32_load (opt a 2)) (f64_load (opt a 3)) o) 
-# 1911 "Lexer.ml"
+# 1922 "Lexer.ml"
           )
   | 35 -> ( 
-# 219 "..\..\text\lexer.fsl"
+# 230 "..\..\text\lexer.fsl"
                        let token = lexeme lexbuf in 
                        let t = token.Substring(0,token.Length-".store".Length) in
                        STORE (fun a o ->
                        numop t (i32_store (opt a 2)) (i64_store (opt a 3))
                                (f32_store (opt a 2)) (f64_store (opt a 3)) o) 
-# 1920 "Lexer.ml"
+# 1931 "Lexer.ml"
           )
   | 36 -> ( 
-# 225 "..\..\text\lexer.fsl"
+# 236 "..\..\text\lexer.fsl"
                      let token = lexeme lexbuf in
                      let t = token.Substring(0,3) in
                      let sz = token.Substring(t.Length+".load".Length-1,token.Length-(t.Length+".load".Length)-2) in
-                     let s = token.Substring(token.Length-1,1) in
+                     let s = //token.Substring(token.Length-1,1) in
+               		token.[token.Length-1] in
                      if t = "i32" && sz = "32" then error lexbuf "unknown operator";
                      LOAD (fun a o ->
                        intop t
@@ -1936,10 +1948,10 @@ and _fslex_token  _fslex_state lexbuf =
                            (ext s i64_load8_s i64_load8_u (opt a 0))
                            (ext s i64_load16_s i64_load16_u (opt a 1))
                            (ext s i64_load32_s i64_load32_u (opt a 2)) o)) 
-# 1939 "Lexer.ml"
+# 1951 "Lexer.ml"
           )
   | 37 -> ( 
-# 241 "..\..\text\lexer.fsl"
+# 253 "..\..\text\lexer.fsl"
                      let token = lexeme lexbuf in
                      let t = token.Substring(0,3) in
                      let sz = token.Substring(t.Length+".store".Length-1,token.Length-(t.Length+".store".Length)) in
@@ -1954,639 +1966,639 @@ and _fslex_token  _fslex_state lexbuf =
                            (i64_store8 (opt a 0))
                            (i64_store16 (opt a 1))
                            (i64_store32 (opt a 2)) o)) 
-# 1957 "Lexer.ml"
+# 1969 "Lexer.ml"
           )
   | 38 -> ( 
-# 256 "..\..\text\lexer.fsl"
+# 268 "..\..\text\lexer.fsl"
                                    
                     let token = lexeme lexbuf in
                     let s = token.Substring("offset=".Length-1) in
                     OFFSET_EQ_NAT s
-# 1965 "Lexer.ml"
+# 1977 "Lexer.ml"
           )
   | 39 -> ( 
-# 260 "..\..\text\lexer.fsl"
+# 272 "..\..\text\lexer.fsl"
                                   
                     let token = lexeme lexbuf in
                     let s = token.Substring("align=".Length-1) in
                     ALIGN_EQ_NAT s 
-# 1973 "Lexer.ml"
+# 1985 "Lexer.ml"
           )
   | 40 -> ( 
-# 264 "..\..\text\lexer.fsl"
+# 276 "..\..\text\lexer.fsl"
                                  
                     let token = lexeme lexbuf in
                     let t = token.Substring(0,3) in
                     UNARY (intop t i32_clz i64_clz) 
-# 1981 "Lexer.ml"
+# 1993 "Lexer.ml"
           )
   | 41 -> ( 
-# 268 "..\..\text\lexer.fsl"
-                                 
-                    let token = lexeme lexbuf in
-                    let t = token.Substring(0,3) in
-                    UNARY (intop t i32_ctz i64_ctz) 
-# 1989 "Lexer.ml"
-          )
-  | 42 -> ( 
-# 272 "..\..\text\lexer.fsl"
-                                    
-                    let token = lexeme lexbuf in
-                    let t = token.Substring(0,3) in
-                    UNARY (intop t i32_popcnt i64_popcnt) 
-# 1997 "Lexer.ml"
-          )
-  | 43 -> ( 
-# 276 "..\..\text\lexer.fsl"
-                                  
-                    let token = lexeme lexbuf in
-                    let t = token.Substring(0,3) in
-                    UNARY (floatop t f32_neg f64_neg) 
-# 2005 "Lexer.ml"
-          )
-  | 44 -> ( 
 # 280 "..\..\text\lexer.fsl"
                                  
                     let token = lexeme lexbuf in
                     let t = token.Substring(0,3) in
-                    UNARY (floatop t f32_abs f64_abs) 
-# 2013 "Lexer.ml"
+                    UNARY (intop t i32_ctz i64_ctz) 
+# 2001 "Lexer.ml"
           )
-  | 45 -> ( 
+  | 42 -> ( 
 # 284 "..\..\text\lexer.fsl"
-                                  
+                                    
                     let token = lexeme lexbuf in
                     let t = token.Substring(0,3) in
-                    UNARY (floatop t f32_sqrt f64_sqrt) 
-# 2021 "Lexer.ml"
+                    UNARY (intop t i32_popcnt i64_popcnt) 
+# 2009 "Lexer.ml"
           )
-  | 46 -> ( 
+  | 43 -> ( 
 # 288 "..\..\text\lexer.fsl"
                                   
                     let token = lexeme lexbuf in
                     let t = token.Substring(0,3) in
+                    UNARY (floatop t f32_neg f64_neg) 
+# 2017 "Lexer.ml"
+          )
+  | 44 -> ( 
+# 292 "..\..\text\lexer.fsl"
+                                 
+                    let token = lexeme lexbuf in
+                    let t = token.Substring(0,3) in
+                    UNARY (floatop t f32_abs f64_abs) 
+# 2025 "Lexer.ml"
+          )
+  | 45 -> ( 
+# 296 "..\..\text\lexer.fsl"
+                                  
+                    let token = lexeme lexbuf in
+                    let t = token.Substring(0,3) in
+                    UNARY (floatop t f32_sqrt f64_sqrt) 
+# 2033 "Lexer.ml"
+          )
+  | 46 -> ( 
+# 300 "..\..\text\lexer.fsl"
+                                  
+                    let token = lexeme lexbuf in
+                    let t = token.Substring(0,3) in
                     UNARY (floatop t f32_ceil f64_ceil) 
-# 2029 "Lexer.ml"
+# 2041 "Lexer.ml"
           )
   | 47 -> ( 
-# 292 "..\..\text\lexer.fsl"
+# 304 "..\..\text\lexer.fsl"
                                    
                     let token = lexeme lexbuf in
                     let t = token.Substring(0,3) in
                     UNARY (floatop t f32_floor f64_floor) 
-# 2037 "Lexer.ml"
+# 2049 "Lexer.ml"
           )
   | 48 -> ( 
-# 296 "..\..\text\lexer.fsl"
+# 308 "..\..\text\lexer.fsl"
                                    
                     let token = lexeme lexbuf in
                     let t = token.Substring(0,3) in
                     UNARY (floatop t f32_floor f64_floor)
-# 2045 "Lexer.ml"
+# 2057 "Lexer.ml"
           )
   | 49 -> ( 
-# 300 "..\..\text\lexer.fsl"
+# 312 "..\..\text\lexer.fsl"
                                      
                     let token = lexeme lexbuf in
                     let t = token.Substring(0,3) in
                     UNARY (floatop t f32_nearest f64_nearest) 
-# 2053 "Lexer.ml"
+# 2065 "Lexer.ml"
           )
   | 50 -> ( 
-# 305 "..\..\text\lexer.fsl"
+# 317 "..\..\text\lexer.fsl"
                                   
                     let token = lexeme lexbuf in
                     let t = token.Substring(0,3) in
                     BINARY (intop t i32_add i64_add) 
-# 2061 "Lexer.ml"
+# 2073 "Lexer.ml"
           )
   | 51 -> ( 
-# 309 "..\..\text\lexer.fsl"
+# 321 "..\..\text\lexer.fsl"
                                   
                     let token = lexeme lexbuf in
                     let t = token.Substring(0,3) in
                     BINARY (intop t i32_sub i64_sub) 
-# 2069 "Lexer.ml"
+# 2081 "Lexer.ml"
           )
   | 52 -> ( 
-# 313 "..\..\text\lexer.fsl"
+# 325 "..\..\text\lexer.fsl"
                                  let token = lexeme lexbuf in let t = token.Substring(0,3) in
                     BINARY (intop t i32_mul i64_mul) 
-# 2075 "Lexer.ml"
+# 2087 "Lexer.ml"
           )
   | 53 -> ( 
-# 315 "..\..\text\lexer.fsl"
+# 327 "..\..\text\lexer.fsl"
                                    let token = lexeme lexbuf in let t = token.Substring(0,3) in  BINARY (intop t i32_div_s i64_div_s) 
-# 2080 "Lexer.ml"
+# 2092 "Lexer.ml"
           )
   | 54 -> ( 
-# 316 "..\..\text\lexer.fsl"
+# 328 "..\..\text\lexer.fsl"
                                    let token = lexeme lexbuf in let t = token.Substring(0,3) in  BINARY (intop t i32_div_u i64_div_u) 
-# 2085 "Lexer.ml"
+# 2097 "Lexer.ml"
           )
   | 55 -> ( 
-# 317 "..\..\text\lexer.fsl"
+# 329 "..\..\text\lexer.fsl"
                                    let token = lexeme lexbuf in let t = token.Substring(0,3) in  BINARY (intop t i32_rem_s i64_rem_s) 
-# 2090 "Lexer.ml"
+# 2102 "Lexer.ml"
           )
   | 56 -> ( 
-# 318 "..\..\text\lexer.fsl"
+# 330 "..\..\text\lexer.fsl"
                                    let token = lexeme lexbuf in let t = token.Substring(0,3) in  BINARY (intop t i32_rem_u i64_rem_u) 
-# 2095 "Lexer.ml"
+# 2107 "Lexer.ml"
           )
   | 57 -> ( 
-# 319 "..\..\text\lexer.fsl"
+# 331 "..\..\text\lexer.fsl"
                                  let token = lexeme lexbuf in let t = token.Substring(0,3) in  BINARY (intop t i32_and i64_and) 
-# 2100 "Lexer.ml"
+# 2112 "Lexer.ml"
           )
   | 58 -> ( 
-# 320 "..\..\text\lexer.fsl"
+# 332 "..\..\text\lexer.fsl"
                                 let token = lexeme lexbuf in let t = token.Substring(0,3) in  BINARY (intop t i32_or i64_or) 
-# 2105 "Lexer.ml"
+# 2117 "Lexer.ml"
           )
   | 59 -> ( 
-# 321 "..\..\text\lexer.fsl"
+# 333 "..\..\text\lexer.fsl"
                                  let token = lexeme lexbuf in let t = token.Substring(0,3) in  BINARY (intop t i32_xor i64_xor) 
-# 2110 "Lexer.ml"
+# 2122 "Lexer.ml"
           )
   | 60 -> ( 
-# 322 "..\..\text\lexer.fsl"
+# 334 "..\..\text\lexer.fsl"
                                  let token = lexeme lexbuf in let t = token.Substring(0,3) in  BINARY (intop t i32_shl i64_shl) 
-# 2115 "Lexer.ml"
+# 2127 "Lexer.ml"
           )
   | 61 -> ( 
-# 323 "..\..\text\lexer.fsl"
+# 335 "..\..\text\lexer.fsl"
                                    let token = lexeme lexbuf in let t = token.Substring(0,3) in  BINARY (intop t i32_shr_s i64_shr_s) 
-# 2120 "Lexer.ml"
+# 2132 "Lexer.ml"
           )
   | 62 -> ( 
-# 324 "..\..\text\lexer.fsl"
+# 336 "..\..\text\lexer.fsl"
                                    let token = lexeme lexbuf in let t = token.Substring(0,3) in  BINARY (intop t i32_shr_u i64_shr_u) 
-# 2125 "Lexer.ml"
+# 2137 "Lexer.ml"
           )
   | 63 -> ( 
-# 325 "..\..\text\lexer.fsl"
+# 337 "..\..\text\lexer.fsl"
                                   let token = lexeme lexbuf in let t = token.Substring(0,3) in  BINARY (intop t i32_rotl i64_rotl) 
-# 2130 "Lexer.ml"
+# 2142 "Lexer.ml"
           )
   | 64 -> ( 
-# 326 "..\..\text\lexer.fsl"
+# 338 "..\..\text\lexer.fsl"
                                   let token = lexeme lexbuf in let t = token.Substring(0,3) in  BINARY (intop t i32_rotr i64_rotr) 
-# 2135 "Lexer.ml"
+# 2147 "Lexer.ml"
           )
   | 65 -> ( 
-# 327 "..\..\text\lexer.fsl"
+# 339 "..\..\text\lexer.fsl"
                                  let token = lexeme lexbuf in let t = token.Substring(0,3) in  BINARY (floatop t f32_add f64_add) 
-# 2140 "Lexer.ml"
+# 2152 "Lexer.ml"
           )
   | 66 -> ( 
-# 328 "..\..\text\lexer.fsl"
+# 340 "..\..\text\lexer.fsl"
                                  let token = lexeme lexbuf in let t = token.Substring(0,3) in  BINARY (floatop t f32_sub f64_sub) 
-# 2145 "Lexer.ml"
+# 2157 "Lexer.ml"
           )
   | 67 -> ( 
-# 329 "..\..\text\lexer.fsl"
+# 341 "..\..\text\lexer.fsl"
                                  let token = lexeme lexbuf in let t = token.Substring(0,3) in  BINARY (floatop t f32_mul f64_mul) 
-# 2150 "Lexer.ml"
+# 2162 "Lexer.ml"
           )
   | 68 -> ( 
-# 330 "..\..\text\lexer.fsl"
+# 342 "..\..\text\lexer.fsl"
                                  let token = lexeme lexbuf in let t = token.Substring(0,3) in  BINARY (floatop t f32_div f64_div) 
-# 2155 "Lexer.ml"
+# 2167 "Lexer.ml"
           )
   | 69 -> ( 
-# 331 "..\..\text\lexer.fsl"
+# 343 "..\..\text\lexer.fsl"
                                  let token = lexeme lexbuf in let t = token.Substring(0,3) in  BINARY (floatop t f32_min f64_min) 
-# 2160 "Lexer.ml"
+# 2172 "Lexer.ml"
           )
   | 70 -> ( 
-# 332 "..\..\text\lexer.fsl"
+# 344 "..\..\text\lexer.fsl"
                                  let token = lexeme lexbuf in let t = token.Substring(0,3) in  BINARY (floatop t f32_max f64_max) 
-# 2165 "Lexer.ml"
+# 2177 "Lexer.ml"
           )
   | 71 -> ( 
-# 333 "..\..\text\lexer.fsl"
+# 345 "..\..\text\lexer.fsl"
                                       let token = lexeme lexbuf in let t = token.Substring(0,3) in  BINARY (floatop t f32_copysign f64_copysign) 
-# 2170 "Lexer.ml"
+# 2182 "Lexer.ml"
           )
   | 72 -> ( 
-# 335 "..\..\text\lexer.fsl"
+# 347 "..\..\text\lexer.fsl"
                                   let token = lexeme lexbuf in let t = token.Substring(0,3) in  TEST (intop t i32_eqz i64_eqz) 
-# 2175 "Lexer.ml"
+# 2187 "Lexer.ml"
           )
   | 73 -> ( 
-# 337 "..\..\text\lexer.fsl"
+# 349 "..\..\text\lexer.fsl"
                                  let token = lexeme lexbuf in let t = token.Substring(0,3) in  COMPARE (intop t i32_eq i64_eq) 
-# 2180 "Lexer.ml"
+# 2192 "Lexer.ml"
           )
   | 74 -> ( 
-# 338 "..\..\text\lexer.fsl"
+# 350 "..\..\text\lexer.fsl"
                                  let token = lexeme lexbuf in let t = token.Substring(0,3) in  COMPARE (intop t i32_ne i64_ne) 
-# 2185 "Lexer.ml"
+# 2197 "Lexer.ml"
           )
   | 75 -> ( 
-# 339 "..\..\text\lexer.fsl"
+# 351 "..\..\text\lexer.fsl"
                                    let token = lexeme lexbuf in let t = token.Substring(0,3) in  COMPARE (intop t i32_lt_s i64_lt_s) 
-# 2190 "Lexer.ml"
+# 2202 "Lexer.ml"
           )
   | 76 -> ( 
-# 340 "..\..\text\lexer.fsl"
+# 352 "..\..\text\lexer.fsl"
                                    let token = lexeme lexbuf in let t = token.Substring(0,3) in  COMPARE (intop t i32_lt_u i64_lt_u) 
-# 2195 "Lexer.ml"
+# 2207 "Lexer.ml"
           )
   | 77 -> ( 
-# 341 "..\..\text\lexer.fsl"
+# 353 "..\..\text\lexer.fsl"
                                    let token = lexeme lexbuf in let t = token.Substring(0,3) in  COMPARE (intop t i32_le_s i64_le_s) 
-# 2200 "Lexer.ml"
+# 2212 "Lexer.ml"
           )
   | 78 -> ( 
-# 342 "..\..\text\lexer.fsl"
+# 354 "..\..\text\lexer.fsl"
                                    let token = lexeme lexbuf in let t = token.Substring(0,3) in  COMPARE (intop t i32_le_u i64_le_u) 
-# 2205 "Lexer.ml"
+# 2217 "Lexer.ml"
           )
   | 79 -> ( 
-# 343 "..\..\text\lexer.fsl"
+# 355 "..\..\text\lexer.fsl"
                                    let token = lexeme lexbuf in let t = token.Substring(0,3) in  COMPARE (intop t i32_gt_s i64_gt_s) 
-# 2210 "Lexer.ml"
+# 2222 "Lexer.ml"
           )
   | 80 -> ( 
-# 344 "..\..\text\lexer.fsl"
+# 356 "..\..\text\lexer.fsl"
                                    let token = lexeme lexbuf in let t = token.Substring(0,3) in  COMPARE (intop t i32_gt_u i64_gt_u) 
-# 2215 "Lexer.ml"
+# 2227 "Lexer.ml"
           )
   | 81 -> ( 
-# 345 "..\..\text\lexer.fsl"
+# 357 "..\..\text\lexer.fsl"
                                    let token = lexeme lexbuf in let t = token.Substring(0,3) in  COMPARE (intop t i32_ge_s i64_ge_s) 
-# 2220 "Lexer.ml"
+# 2232 "Lexer.ml"
           )
   | 82 -> ( 
-# 346 "..\..\text\lexer.fsl"
+# 358 "..\..\text\lexer.fsl"
                                    let token = lexeme lexbuf in let t = token.Substring(0,3) in  COMPARE (intop t i32_ge_u i64_ge_u) 
-# 2225 "Lexer.ml"
+# 2237 "Lexer.ml"
           )
   | 83 -> ( 
-# 347 "..\..\text\lexer.fsl"
+# 359 "..\..\text\lexer.fsl"
                                  let token = lexeme lexbuf in let t = token.Substring(0,3) in  COMPARE (floatop t f32_eq f64_eq) 
-# 2230 "Lexer.ml"
+# 2242 "Lexer.ml"
           )
   | 84 -> ( 
-# 348 "..\..\text\lexer.fsl"
+# 360 "..\..\text\lexer.fsl"
                                  let token = lexeme lexbuf in let t = token.Substring(0,3) in  COMPARE (floatop t f32_ne f64_ne) 
-# 2235 "Lexer.ml"
+# 2247 "Lexer.ml"
           )
   | 85 -> ( 
-# 349 "..\..\text\lexer.fsl"
+# 361 "..\..\text\lexer.fsl"
                                  let token = lexeme lexbuf in let t = token.Substring(0,3) in  COMPARE (floatop t f32_lt f64_lt) 
-# 2240 "Lexer.ml"
+# 2252 "Lexer.ml"
           )
   | 86 -> ( 
-# 350 "..\..\text\lexer.fsl"
+# 362 "..\..\text\lexer.fsl"
                                  let token = lexeme lexbuf in let t = token.Substring(0,3) in  COMPARE (floatop t f32_le f64_le) 
-# 2245 "Lexer.ml"
+# 2257 "Lexer.ml"
           )
   | 87 -> ( 
-# 351 "..\..\text\lexer.fsl"
+# 363 "..\..\text\lexer.fsl"
                                  let token = lexeme lexbuf in let t = token.Substring(0,3) in  COMPARE (floatop t f32_gt f64_gt) 
-# 2250 "Lexer.ml"
+# 2262 "Lexer.ml"
           )
   | 88 -> ( 
-# 352 "..\..\text\lexer.fsl"
+# 364 "..\..\text\lexer.fsl"
                                  let token = lexeme lexbuf in let t = token.Substring(0,3) in  COMPARE (floatop t f32_ge f64_ge) 
-# 2255 "Lexer.ml"
+# 2267 "Lexer.ml"
           )
   | 89 -> ( 
-# 354 "..\..\text\lexer.fsl"
+# 366 "..\..\text\lexer.fsl"
                                     CONVERT i32_wrap_i64 
-# 2260 "Lexer.ml"
+# 2272 "Lexer.ml"
           )
   | 90 -> ( 
-# 355 "..\..\text\lexer.fsl"
+# 367 "..\..\text\lexer.fsl"
                                         CONVERT i64_extend_s_i32 
-# 2265 "Lexer.ml"
+# 2277 "Lexer.ml"
           )
   | 91 -> ( 
-# 356 "..\..\text\lexer.fsl"
+# 368 "..\..\text\lexer.fsl"
                                         CONVERT i64_extend_u_i32 
-# 2270 "Lexer.ml"
+# 2282 "Lexer.ml"
           )
   | 92 -> ( 
-# 357 "..\..\text\lexer.fsl"
+# 369 "..\..\text\lexer.fsl"
                                       CONVERT f32_demote_f64 
-# 2275 "Lexer.ml"
+# 2287 "Lexer.ml"
           )
   | 93 -> ( 
-# 358 "..\..\text\lexer.fsl"
+# 370 "..\..\text\lexer.fsl"
                                        CONVERT f64_promote_f32 
-# 2280 "Lexer.ml"
+# 2292 "Lexer.ml"
           )
   | 94 -> ( 
-# 360 "..\..\text\lexer.fsl"
+# 372 "..\..\text\lexer.fsl"
                      let token = lexeme lexbuf in let t = token.Substring(0,3) in  CONVERT (intop t i32_trunc_s_f32 i64_trunc_s_f32) 
-# 2285 "Lexer.ml"
+# 2297 "Lexer.ml"
           )
   | 95 -> ( 
-# 362 "..\..\text\lexer.fsl"
+# 374 "..\..\text\lexer.fsl"
                      let token = lexeme lexbuf in let t = token.Substring(0,3) in  CONVERT (intop t i32_trunc_u_f32 i64_trunc_u_f32) 
-# 2290 "Lexer.ml"
+# 2302 "Lexer.ml"
           )
   | 96 -> ( 
-# 364 "..\..\text\lexer.fsl"
+# 376 "..\..\text\lexer.fsl"
                      let token = lexeme lexbuf in let t = token.Substring(0,3) in  CONVERT (intop t i32_trunc_s_f64 i64_trunc_s_f64) 
-# 2295 "Lexer.ml"
+# 2307 "Lexer.ml"
           )
   | 97 -> ( 
-# 366 "..\..\text\lexer.fsl"
+# 378 "..\..\text\lexer.fsl"
                      let token = lexeme lexbuf in let t = token.Substring(0,3) in  CONVERT (intop t i32_trunc_u_f64 i64_trunc_u_f64) 
-# 2300 "Lexer.ml"
+# 2312 "Lexer.ml"
           )
   | 98 -> ( 
-# 368 "..\..\text\lexer.fsl"
+# 380 "..\..\text\lexer.fsl"
                      let token = lexeme lexbuf in let t = token.Substring(0,3) in  CONVERT (floatop t f32_convert_s_i32 f64_convert_s_i32) 
-# 2305 "Lexer.ml"
+# 2317 "Lexer.ml"
           )
   | 99 -> ( 
-# 370 "..\..\text\lexer.fsl"
+# 382 "..\..\text\lexer.fsl"
                      let token = lexeme lexbuf in let t = token.Substring(0,3) in  CONVERT (floatop t f32_convert_u_i32 f64_convert_u_i32) 
-# 2310 "Lexer.ml"
+# 2322 "Lexer.ml"
           )
   | 100 -> ( 
-# 372 "..\..\text\lexer.fsl"
+# 384 "..\..\text\lexer.fsl"
                      let token = lexeme lexbuf in let t = token.Substring(0,3) in  CONVERT (floatop t f32_convert_s_i64 f64_convert_s_i64) 
-# 2315 "Lexer.ml"
+# 2327 "Lexer.ml"
           )
   | 101 -> ( 
-# 374 "..\..\text\lexer.fsl"
+# 386 "..\..\text\lexer.fsl"
                      let token = lexeme lexbuf in let t = token.Substring(0,3) in  CONVERT (floatop t f32_convert_u_i64 f64_convert_u_i64) 
-# 2320 "Lexer.ml"
+# 2332 "Lexer.ml"
           )
   | 102 -> ( 
-# 375 "..\..\text\lexer.fsl"
+# 387 "..\..\text\lexer.fsl"
                                            CONVERT f32_reinterpret_i32 
-# 2325 "Lexer.ml"
+# 2337 "Lexer.ml"
           )
   | 103 -> ( 
-# 376 "..\..\text\lexer.fsl"
+# 388 "..\..\text\lexer.fsl"
                                            CONVERT f64_reinterpret_i64 
-# 2330 "Lexer.ml"
+# 2342 "Lexer.ml"
           )
   | 104 -> ( 
-# 377 "..\..\text\lexer.fsl"
+# 389 "..\..\text\lexer.fsl"
                                            CONVERT i32_reinterpret_f32 
-# 2335 "Lexer.ml"
+# 2347 "Lexer.ml"
           )
   | 105 -> ( 
-# 378 "..\..\text\lexer.fsl"
+# 390 "..\..\text\lexer.fsl"
                                            CONVERT i64_reinterpret_f64 
-# 2340 "Lexer.ml"
+# 2352 "Lexer.ml"
           )
   | 106 -> ( 
-# 380 "..\..\text\lexer.fsl"
+# 392 "..\..\text\lexer.fsl"
                                       CURRENT_MEMORY 
-# 2345 "Lexer.ml"
+# 2357 "Lexer.ml"
           )
   | 107 -> ( 
-# 381 "..\..\text\lexer.fsl"
+# 393 "..\..\text\lexer.fsl"
                                    GROW_MEMORY 
-# 2350 "Lexer.ml"
+# 2362 "Lexer.ml"
           )
   | 108 -> ( 
-# 383 "..\..\text\lexer.fsl"
+# 395 "..\..\text\lexer.fsl"
                             TYPE 
-# 2355 "Lexer.ml"
+# 2367 "Lexer.ml"
           )
   | 109 -> ( 
-# 384 "..\..\text\lexer.fsl"
+# 396 "..\..\text\lexer.fsl"
                             FUNC 
-# 2360 "Lexer.ml"
+# 2372 "Lexer.ml"
           )
   | 110 -> ( 
-# 385 "..\..\text\lexer.fsl"
+# 397 "..\..\text\lexer.fsl"
                              START 
-# 2365 "Lexer.ml"
+# 2377 "Lexer.ml"
           )
   | 111 -> ( 
-# 386 "..\..\text\lexer.fsl"
+# 398 "..\..\text\lexer.fsl"
                              PARAM 
-# 2370 "Lexer.ml"
+# 2382 "Lexer.ml"
           )
   | 112 -> ( 
-# 387 "..\..\text\lexer.fsl"
+# 399 "..\..\text\lexer.fsl"
                               RESULT 
-# 2375 "Lexer.ml"
+# 2387 "Lexer.ml"
           )
   | 113 -> ( 
-# 388 "..\..\text\lexer.fsl"
+# 400 "..\..\text\lexer.fsl"
                              LOCAL 
-# 2380 "Lexer.ml"
+# 2392 "Lexer.ml"
           )
   | 114 -> ( 
-# 389 "..\..\text\lexer.fsl"
+# 401 "..\..\text\lexer.fsl"
                               GLOBAL 
-# 2385 "Lexer.ml"
+# 2397 "Lexer.ml"
           )
   | 115 -> ( 
-# 390 "..\..\text\lexer.fsl"
+# 402 "..\..\text\lexer.fsl"
                              TABLE 
-# 2390 "Lexer.ml"
+# 2402 "Lexer.ml"
           )
   | 116 -> ( 
-# 391 "..\..\text\lexer.fsl"
+# 403 "..\..\text\lexer.fsl"
                               MEMORY 
-# 2395 "Lexer.ml"
+# 2407 "Lexer.ml"
           )
   | 117 -> ( 
-# 392 "..\..\text\lexer.fsl"
+# 404 "..\..\text\lexer.fsl"
                             ELEM 
-# 2400 "Lexer.ml"
+# 2412 "Lexer.ml"
           )
   | 118 -> ( 
-# 393 "..\..\text\lexer.fsl"
+# 405 "..\..\text\lexer.fsl"
                             DATA 
-# 2405 "Lexer.ml"
+# 2417 "Lexer.ml"
           )
   | 119 -> ( 
-# 394 "..\..\text\lexer.fsl"
+# 406 "..\..\text\lexer.fsl"
                               OFFSET 
-# 2410 "Lexer.ml"
+# 2422 "Lexer.ml"
           )
   | 120 -> ( 
-# 395 "..\..\text\lexer.fsl"
+# 407 "..\..\text\lexer.fsl"
                               IMPORT 
-# 2415 "Lexer.ml"
+# 2427 "Lexer.ml"
           )
   | 121 -> ( 
-# 396 "..\..\text\lexer.fsl"
+# 408 "..\..\text\lexer.fsl"
                               EXPORT 
-# 2420 "Lexer.ml"
+# 2432 "Lexer.ml"
           )
   | 122 -> ( 
-# 398 "..\..\text\lexer.fsl"
+# 410 "..\..\text\lexer.fsl"
                               MODULE 
-# 2425 "Lexer.ml"
+# 2437 "Lexer.ml"
           )
   | 123 -> ( 
-# 399 "..\..\text\lexer.fsl"
+# 411 "..\..\text\lexer.fsl"
                               BIN 
-# 2430 "Lexer.ml"
+# 2442 "Lexer.ml"
           )
   | 124 -> ( 
-# 400 "..\..\text\lexer.fsl"
+# 412 "..\..\text\lexer.fsl"
                              QUOTE 
-# 2435 "Lexer.ml"
+# 2447 "Lexer.ml"
           )
   | 125 -> ( 
-# 402 "..\..\text\lexer.fsl"
+# 414 "..\..\text\lexer.fsl"
                               SCRIPT 
-# 2440 "Lexer.ml"
+# 2452 "Lexer.ml"
           )
   | 126 -> ( 
-# 403 "..\..\text\lexer.fsl"
+# 415 "..\..\text\lexer.fsl"
                                 REGISTER 
-# 2445 "Lexer.ml"
+# 2457 "Lexer.ml"
           )
   | 127 -> ( 
-# 404 "..\..\text\lexer.fsl"
+# 416 "..\..\text\lexer.fsl"
                               INVOKE 
-# 2450 "Lexer.ml"
+# 2462 "Lexer.ml"
           )
   | 128 -> ( 
-# 405 "..\..\text\lexer.fsl"
+# 417 "..\..\text\lexer.fsl"
                            GET 
-# 2455 "Lexer.ml"
+# 2467 "Lexer.ml"
           )
   | 129 -> ( 
-# 406 "..\..\text\lexer.fsl"
+# 418 "..\..\text\lexer.fsl"
                                         ASSERT_MALFORMED 
-# 2460 "Lexer.ml"
+# 2472 "Lexer.ml"
           )
   | 130 -> ( 
-# 407 "..\..\text\lexer.fsl"
+# 419 "..\..\text\lexer.fsl"
                                       ASSERT_INVALID 
-# 2465 "Lexer.ml"
+# 2477 "Lexer.ml"
           )
   | 131 -> ( 
-# 408 "..\..\text\lexer.fsl"
+# 420 "..\..\text\lexer.fsl"
                                          ASSERT_UNLINKABLE 
-# 2470 "Lexer.ml"
+# 2482 "Lexer.ml"
           )
   | 132 -> ( 
-# 409 "..\..\text\lexer.fsl"
+# 421 "..\..\text\lexer.fsl"
                                      ASSERT_RETURN 
-# 2475 "Lexer.ml"
+# 2487 "Lexer.ml"
           )
   | 133 -> ( 
-# 410 "..\..\text\lexer.fsl"
+# 422 "..\..\text\lexer.fsl"
                                                    ASSERT_RETURN_CANONICAL_NAN 
-# 2480 "Lexer.ml"
+# 2492 "Lexer.ml"
           )
   | 134 -> ( 
-# 411 "..\..\text\lexer.fsl"
+# 423 "..\..\text\lexer.fsl"
                                                     ASSERT_RETURN_ARITHMETIC_NAN 
-# 2485 "Lexer.ml"
+# 2497 "Lexer.ml"
           )
   | 135 -> ( 
-# 412 "..\..\text\lexer.fsl"
+# 424 "..\..\text\lexer.fsl"
                                    ASSERT_TRAP 
-# 2490 "Lexer.ml"
+# 2502 "Lexer.ml"
           )
   | 136 -> ( 
-# 413 "..\..\text\lexer.fsl"
+# 425 "..\..\text\lexer.fsl"
                                          ASSERT_EXHAUSTION 
-# 2495 "Lexer.ml"
+# 2507 "Lexer.ml"
           )
   | 137 -> ( 
-# 414 "..\..\text\lexer.fsl"
+# 426 "..\..\text\lexer.fsl"
                              INPUT 
-# 2500 "Lexer.ml"
+# 2512 "Lexer.ml"
           )
   | 138 -> ( 
-# 415 "..\..\text\lexer.fsl"
+# 427 "..\..\text\lexer.fsl"
                               OUTPUT 
-# 2505 "Lexer.ml"
+# 2517 "Lexer.ml"
           )
   | 139 -> ( 
-# 417 "..\..\text\lexer.fsl"
+# 429 "..\..\text\lexer.fsl"
                           VAR (lexeme lexbuf) 
-# 2510 "Lexer.ml"
+# 2522 "Lexer.ml"
           )
   | 140 -> ( 
-# 419 "..\..\text\lexer.fsl"
+# 431 "..\..\text\lexer.fsl"
                                         EOF 
-# 2515 "Lexer.ml"
+# 2527 "Lexer.ml"
           )
   | 141 -> ( 
-# 420 "..\..\text\lexer.fsl"
+# 432 "..\..\text\lexer.fsl"
                                          Lexing.new_line lexbuf; token lexbuf 
-# 2520 "Lexer.ml"
+# 2532 "Lexer.ml"
           )
   | 142 -> ( 
-# 421 "..\..\text\lexer.fsl"
+# 433 "..\..\text\lexer.fsl"
                                      token lexbuf (* causes error on following position *) 
-# 2525 "Lexer.ml"
+# 2537 "Lexer.ml"
           )
   | 143 -> ( 
-# 422 "..\..\text\lexer.fsl"
-                          comment (Lexing.lexeme_start_p lexbuf) lexbuf; token lexbuf 
-# 2530 "Lexer.ml"
+# 434 "..\..\text\lexer.fsl"
+                          comment (lexbuf.StartPos) lexbuf; token lexbuf 
+# 2542 "Lexer.ml"
           )
   | 144 -> ( 
-# 424 "..\..\text\lexer.fsl"
+# 436 "..\..\text\lexer.fsl"
                                  token lexbuf 
-# 2535 "Lexer.ml"
+# 2547 "Lexer.ml"
           )
   | 145 -> ( 
-# 425 "..\..\text\lexer.fsl"
+# 437 "..\..\text\lexer.fsl"
                           Lexing.new_line lexbuf; token lexbuf 
-# 2540 "Lexer.ml"
+# 2552 "Lexer.ml"
           )
   | 146 -> ( 
-# 426 "..\..\text\lexer.fsl"
+# 438 "..\..\text\lexer.fsl"
                          EOF 
-# 2545 "Lexer.ml"
+# 2557 "Lexer.ml"
           )
   | 147 -> ( 
-# 429 "..\..\text\lexer.fsl"
+# 441 "..\..\text\lexer.fsl"
                           error lexbuf "malformed operator" 
-# 2550 "Lexer.ml"
+# 2562 "Lexer.ml"
           )
   | 148 -> ( 
-# 430 "..\..\text\lexer.fsl"
+# 442 "..\..\text\lexer.fsl"
                        error lexbuf "malformed UTF-8 encoding" 
-# 2555 "Lexer.ml"
+# 2567 "Lexer.ml"
           )
   | _ -> failwith "token"
 (* Rule comment *)
 and _fslex_comment start _fslex_state lexbuf =
   match _fslex_tables.Interpret(_fslex_state,lexbuf) with
   | 0 -> ( 
-# 433 "..\..\text\lexer.fsl"
+# 445 "..\..\text\lexer.fsl"
                           () 
-# 2564 "Lexer.ml"
+# 2576 "Lexer.ml"
           )
   | 1 -> ( 
-# 434 "..\..\text\lexer.fsl"
-                          comment (Lexing.lexeme_start_p lexbuf) lexbuf; comment start lexbuf 
-# 2569 "Lexer.ml"
+# 446 "..\..\text\lexer.fsl"
+                          comment (lexbuf.StartPos) lexbuf; comment start lexbuf 
+# 2581 "Lexer.ml"
           )
   | 2 -> ( 
-# 435 "..\..\text\lexer.fsl"
+# 447 "..\..\text\lexer.fsl"
                           Lexing.new_line lexbuf; comment start lexbuf 
-# 2574 "Lexer.ml"
+# 2586 "Lexer.ml"
           )
   | 3 -> ( 
-# 436 "..\..\text\lexer.fsl"
+# 448 "..\..\text\lexer.fsl"
                          error_nest start lexbuf "unclosed comment" 
-# 2579 "Lexer.ml"
+# 2591 "Lexer.ml"
           )
   | 4 -> ( 
-# 437 "..\..\text\lexer.fsl"
+# 449 "..\..\text\lexer.fsl"
                           comment start lexbuf 
-# 2584 "Lexer.ml"
+# 2596 "Lexer.ml"
           )
   | 5 -> ( 
-# 438 "..\..\text\lexer.fsl"
+# 450 "..\..\text\lexer.fsl"
                        error lexbuf "malformed UTF-8 encoding" 
-# 2589 "Lexer.ml"
+# 2601 "Lexer.ml"
           )
   | _ -> failwith "comment"
 

@@ -1,3 +1,6 @@
+(*F#
+open FSharp.Compatibility.OCaml 
+F#*)
 type sexpr = Atom of string | Node of string * sexpr list
 
 type rope = Leaf of string | Concat of rope list
@@ -27,6 +30,6 @@ let output oc width x =
   output_string oc "\n";
   flush oc
 
-let print = output stdout
+let print width x = output stdout width x
 
 let to_string width x = concat (snd (pp 0 width x)) ^ "\n"

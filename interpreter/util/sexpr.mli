@@ -1,3 +1,6 @@
+(*F#
+open FSharp.Compatibility.OCaml 
+F#*)
 type sexpr = Atom of string | Node of string * sexpr list
 
 val output : out_channel -> int -> sexpr -> unit

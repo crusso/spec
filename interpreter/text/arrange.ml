@@ -4,7 +4,9 @@ open Script
 open Values
 open Types
 open Sexpr
-
+(*F#
+open FSharp.Compatibility.OCaml 
+F#*)
 
 (* Generic formatting *)
 
@@ -68,7 +70,7 @@ let func_type (FuncType (ins, out)) =
 
 let struct_type = func_type
 
-let limits nat {min; max} =
+let limits nat {min=min; max=max} =
   String.concat " " (nat min :: opt nat max)
 
 let global_type = function
@@ -134,7 +136,7 @@ module FloatOp =
 struct
   open Ast.FloatOp
 
-  let testop xx = fun _ -> assert false
+  let testop xx = fun _ -> assert false;failwith "testop"
 
   let relop xx = function
     | Eq -> "eq"
@@ -196,7 +198,7 @@ let extension = function
   | Memory.SX -> "_s"
   | Memory.ZX -> "_u"
 
-let memop name {ty; align; offset; _} =
+let memop name {ty=ty; align=align; offset=offset; sz=_} =
   value_type ty ^ "." ^ name ^
   (if offset = 0l then "" else " offset=" ^ nat32 offset) ^
   (if 1 lsl align = size ty then "" else " align=" ^ nat (1 lsl align))
@@ -254,14 +256,20 @@ let rec instr e =
     | Convert op -> cvtop op, []
   in Node (head, inner)
 
+
+(*IF-OCAML*)
 let const c =
   list instr c.it
-
+(*ENDIF-OCAML*)
+(*F#
+let ``const`` c =
+  list instr c.it
+F#*)
 
 (* Functions *)
 
 let func_with_name name f =
-  let {ftype; locals; body} = f.it in
+  let {ftype=ftype; locals=locals; body=body} = f.it in
   Node ("func" ^ name,
     [Node ("type " ^ var ftype, [])] @
     decls "local" locals @
@@ -290,8 +298,14 @@ let memory off i mem =
   Node ("memory $" ^ nat (off + i) ^ " " ^ limits nat32 lim, [])
 
 let segment head dat seg =
-  let {index; offset; init} = seg.it in
+  let {index=index; offset=offset; init=init} = seg.it in
+(*IF-OCAML*)
   Node (head, atom var index :: Node ("offset", const offset) :: dat init)
+(*ENDIF-OCAML*)
+(*F#
+ Node (head, atom var index :: Node ("offset", ``const`` offset) :: dat init)
+F#*)
+  
 
 let elems seg =
   segment "elem" (list (atom var)) seg
@@ -314,7 +328,7 @@ let import_desc i d =
   | GlobalImport t -> Node ("global $" ^ nat i, [global_type t])
 
 let import i im =
-  let {module_name; item_name; idesc} = im.it in
+  let {module_name=module_name; item_name=item_name; idesc=idesc} = im.it in
   Node ("import",
     [atom name module_name; atom name item_name; import_desc i idesc]
   )
@@ -327,14 +341,20 @@ let export_desc d =
   | GlobalExport x -> Node ("global", [atom var x])
 
 let export ex =
-  let {name = n; edesc} = ex.it in
+  let {name = n; edesc = edesc} = ex.it in
   Node ("export", [atom name n; export_desc edesc])
 
+
+(*IF-OCAML*)
 let global off i g =
   let {gtype; value} = g.it in
   Node ("global $" ^ nat (off + i), global_type gtype :: const value)
-
-
+(*ENDIF-OCAML*)
+(*F#
+let ``global`` off i g =
+  let {gtype=gtype; value=value} = g.it in
+  Node ("global $" ^ nat (off + i), global_type gtype :: ``const`` value)
+F#*)
 (* Modules *)
 
 let var_opt = function
@@ -363,7 +383,12 @@ let module_with_var_opt x_opt m =
     listi import func_imports @
     listi (table (List.length table_imports)) m.it.tables @
     listi (memory (List.length memory_imports)) m.it.memories @
+(*IF-OCAML*)
     listi (global (List.length global_imports)) m.it.globals @
+(*ENDIF-OCAML*)
+(*F#
+    listi (``global`` (List.length global_imports)) m.it.globals @
+F#*)
     listi (func_with_index (List.length func_imports)) m.it.funcs @
     list export m.it.exports @
     opt start m.it.start @
@@ -377,7 +402,7 @@ let binary_module_with_var_opt x_opt bs =
 let quoted_module_with_var_opt x_opt s =
   Node ("module" ^ var_opt x_opt ^ " quote", break_string s)
 
-let module_ = module_with_var_opt None
+let module_ m = module_with_var_opt None m
 
 
 (* Scripts *)
@@ -388,7 +413,7 @@ let literal lit =
   | Values.I64 i -> Node ("i64.const " ^ I64.to_string_s i, [])
   | Values.F32 z -> Node ("f32.const " ^ F32.to_string z, [])
   | Values.F64 z -> Node ("f64.const " ^ F64.to_string z, [])
-
+(*IF-OCAML*)
 let definition mode x_opt def =
   try
     match mode, def.it with
@@ -410,7 +435,34 @@ let definition mode x_opt def =
       quoted_module_with_var_opt x_opt s
   with Parse.Syntax _ ->
     quoted_module_with_var_opt x_opt "<invalid module>"
+(*ENDIF-OCAML*)
+(*F#
+type kind = Textual_ | Binary_ | Original_
+let definition mode x_opt def =
+  try
+    match mode, def.it with
+    | Textual_, _ | Original_, Textual _ ->
+      let rec unquote def =
+        match def.it with
+        | Textual m -> m
+        | Encoded (_, bs) -> Decode.decode "" bs
+        | Quoted (_, s) -> unquote (Parse.string_to_module s)
+      in module_with_var_opt x_opt (unquote def)
+    | Binary_, _ | Original_, Encoded _ ->
+      let rec unquote def =
+        match def.it with
+        | Textual m -> Encode.encode m
+        | Encoded (_, bs) -> bs
+        | Quoted (_, s) -> unquote (Parse.string_to_module s)
+      in binary_module_with_var_opt x_opt (unquote def)
+    | Original_, Quoted (_, s) ->
+      quoted_module_with_var_opt x_opt s
+  with Parse.Syntax _ ->
+    quoted_module_with_var_opt x_opt "<invalid module>"
 
+let Textual=Textual_
+let Binary=Binary_
+F#*)
 let access x_opt n =
   String.concat " " [var_opt x_opt; name n]
 
@@ -424,7 +476,12 @@ let action act =
 let assertion mode ass =
   match ass.it with
   | AssertMalformed (def, re) ->
+(*IF-OCAML*)
     Node ("assert_malformed", [definition `Original None def; Atom (string re)])
+(*ENDIF-OCAML*)
+(*F#
+    Node ("assert_malformed", [definition Original_ None def; Atom (string re)])
+F#*)
   | AssertInvalid (def, re) ->
     Node ("assert_invalid", [definition mode None def; Atom (string re)])
   | AssertUnlinkable (def, re) ->
@@ -449,6 +506,6 @@ let command mode cmd =
     Node ("register " ^ name n ^ var_opt x_opt, [])
   | Action act -> action act
   | Assertion ass -> assertion mode ass
-  | Meta _ -> assert false
+  | Meta _ -> assert false;failwith "command"
 
 let script mode scr = List.map (command mode) scr

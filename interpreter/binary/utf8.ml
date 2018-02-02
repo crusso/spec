@@ -1,7 +1,8 @@
-exception Utf8
 (*F#
 open FSharp.Compatibility.OCaml
 F#*)
+
+exception Utf8
 
 let con_ n = 0x80 lor (n land 0x3f)
 

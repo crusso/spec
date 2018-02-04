@@ -211,15 +211,18 @@
     </FsLex>
     <Compile Include="Parser.ml" />
     <Compile Include="Lexer.ml" />
-    <Compile Include="..\..\script\js.ml">
-      <Link>js.ml</Link>
+    <Compile Include="..\..\text\parse.mli">
+      <Link>parse.mli</Link>
     </Compile>
-    <Compile Include="..\..\text\parse.mli" />
-    
     <Compile Include="..\..\text\parse.ml">
       <Link>parse.ml</Link>
     </Compile>
-    <Compile Include="..\..\util\sexpr.mli" />
+    <Compile Include="..\..\script\js.ml">
+      <Link>js.ml</Link>
+    </Compile>
+    <Compile Include="..\..\util\sexpr.mli">
+      <Link>sexpr.mli</Link>
+    </Compile>
     <Compile Include="..\..\util\sexpr.ml">
       <Link>sexpr.ml</Link>
     </Compile>
@@ -229,7 +232,9 @@
     <Compile Include="..\..\text\arrange.ml">
       <Link>arrange.ml</Link>
     </Compile>
-    <Compile Include="..\..\text\print.mli" />
+    <Compile Include="..\..\text\print.mli">
+      <Link>print.mli</Link>
+    </Compile>
     <Compile Include="..\..\text\print.ml">
       <Link>print.ml</Link>
     </Compile>

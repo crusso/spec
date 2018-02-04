@@ -1,3 +1,11 @@
+(*F#
+open FSharp.Compatibility.OCaml
+
+module I32Op = Ast.IntOp
+module I64Op = Ast.IntOp
+module F32Op = Ast.FloatOp
+module F64Op = Ast.FloatOp
+F#*)
 open Types
 open Ast
 open Script
@@ -138,8 +146,26 @@ let harness =
 
 (* Context *)
 
+(*IF-OCAML*)
 module NameMap = Map.Make(struct type t = Ast.name let compare = compare end)
 module Map = Map.Make(String)
+(*ENDIF-OCAML*)
+(*F#
+module NameMap =
+   struct
+        type 'a t = Map<Ast.name,'a>
+        let empty = Map.empty
+        let add = Map.add
+        let find = Map.find
+   end
+module Map =
+   struct
+        type 'a t = Map<string,'a>
+        let empty = Map.empty
+        let add = Map.add
+        let find = Map.find
+   end
+F#*)
 
 type exports = extern_type NameMap.t
 type modules = {mutable env : exports Map.t; mutable current : int}
@@ -245,15 +271,15 @@ let wrap module_name item_name wrap_action wrap_assertion at =
   let locals, assertion = wrap_assertion at in
   let item = Lib.List32.length itypes @@ at in
   let types = (FuncType ([], []) @@ at) :: itypes in
-  let imports = [{module_name; item_name; idesc} @@ at] in
+  let imports = [{module_name=module_name; item_name=item_name; idesc=idesc} @@ at] in
   let edesc = FuncExport item @@ at in
-  let exports = [{name = Utf8.decode "run"; edesc} @@ at] in
+  let exports = [{name = Utf8.decode "run"; edesc=edesc} @@ at] in
   let body =
     [ Block ([], action @ assertion @ [Return @@ at]) @@ at;
       Unreachable @@ at ]
   in
-  let funcs = [{ftype = 0l @@ at; locals; body} @@ at] in
-  let m = {empty_module with types; funcs; imports; exports} @@ at in
+  let funcs = [{ftype = 0l @@ at; locals=locals; body=body} @@ at] in
+  let m = {empty_module with types=types; funcs=funcs; imports=imports; exports=exports} @@ at in
   Encode.encode m
 
 
@@ -331,7 +357,7 @@ let of_action mods act =
       "[" ^ String.concat ", " (List.map of_literal lits) ^ "])",
     (match lookup mods x_opt name act.at with
     | ExternFuncType ft when not (is_js_func_type ft) ->
-      let FuncType (_, out) = ft in
+      let (FuncType (_, out)) = ft in
       Some (of_wrapper mods x_opt name (invoke ft lits), out)
     | _ -> None
     )
@@ -339,7 +365,7 @@ let of_action mods act =
     "get(" ^ of_var_opt mods x_opt ^ ", " ^ of_name name ^ ")",
     (match lookup mods x_opt name act.at with
     | ExternGlobalType gt when not (is_js_global_type gt) ->
-      let GlobalType (t, _) = gt in
+      let (GlobalType (t, _)) = gt in
       Some (of_wrapper mods x_opt name (get gt), [t])
     | _ -> None
     )
@@ -398,7 +424,7 @@ let of_command mods cmd =
     of_assertion' mods act "run" [] None ^ "\n"
   | Assertion ass ->
     of_assertion mods ass ^ "\n"
-  | Meta _ -> assert false
+  | Meta _ -> assert false;failwith "of_command"
 
 let of_script scr =
   (if !Flags.harness then harness else "") ^

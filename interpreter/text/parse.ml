@@ -1,5 +1,7 @@
 
-
+(*F#
+open FSharp.Compatibility.OCaml 
+F#*)
 (*IF-OCAML*)
 type 'a start =
   | Module : (Script.var option * Script.definition) start
@@ -32,7 +34,7 @@ let string_to_module s = snd (string_to Module s)
 (*ENDIF-OCAML*)
 (*F#
 
-type lexbuf = Lexer.Lexing.lexbuf
+type lexbuf = Microsoft.FSharp.Text.Lexing.LexBuffer<char>
 
 [<AbstractClass>]
 type start<'a>() =

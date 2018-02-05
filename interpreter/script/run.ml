@@ -1,8 +1,8 @@
 open Script
 open Source
 
-
 (* Errors & Tracing *)
+(*IF-OCAML*)
 
 module Abort = Error.Make ()
 module Assert = Error.Make ()
@@ -11,6 +11,62 @@ module IO = Error.Make ()
 exception Abort = Abort.Error
 exception Assert = Assert.Error
 exception IO = IO.Error
+(*ENDIF-OCAML*)
+(*F#
+open FSharp.Compatibility.OCaml
+
+//open Microsoft.FSharp.Text.Lexing
+module Lexing =
+  struct
+   let from_string is = failwith "NYI"
+   let from_function is = failwith "NYI"
+  end
+
+module Errors = struct
+module Abort =
+struct
+  exception Error of Source.region * string
+  let warn at m = prerr_endline (Source.string_of_region at ^ ": warning: " ^ m)
+  let error at m = raise (Error (at, m))
+end
+module Assert =
+struct
+  exception Error of Source.region * string
+  let warn at m = prerr_endline (Source.string_of_region at ^ ": warning: " ^ m)
+  let error at m = raise (Error (at, m))
+end
+module IO =
+struct
+  exception Error of Source.region * string
+  let warn at m = prerr_endline (Source.string_of_region at ^ ": warning: " ^ m)
+  let error at m = raise (Error (at, m))
+end
+
+end
+open Errors
+exception Abort = Abort.Error
+exception Assert = Assert.Error
+exception IO = IO.Error
+
+open Types
+open Source
+
+module Bytes =
+struct
+    type t = byte[]
+    let make n (c:char) = Array.create n ((byte) c)
+    let set (a:t) n c = a.[n] <- c
+    let to_string (a:t) = System.BitConverter.ToString(a)
+end
+
+let flush_all () = System.Console.Out.Flush();System.Console.Error.Flush() //TBR
+F#*)
+
+
+
+
+
+
 
 let trace name = if !Flags.trace then print_endline ("-- " ^ name)
 
@@ -80,8 +136,15 @@ let output_file =
   dispatch_file_ext
     create_binary_file
     create_sexpr_file
+(*IF-OCAML*)
     (create_script_file `Binary)
     (create_script_file `Textual)
+(*ENDIF-OCAML*)
+(*F#
+    (create_script_file Arrange.Binary)
+    (create_script_file Arrange.Textual)
+F#*)
+
     create_js_file
 
 let output_stdout get_module =
@@ -125,7 +188,11 @@ let input_sexpr name lexbuf run =
     [Module (var_opt, def) @@ no_region]) run
 
 let input_binary name buf run =
+(*IF-OCAML*)
   let open Source in
+(*ENDIF-OCAML*)
+(*F#
+F#*)
   input_from (fun _ ->
     [Module (None, Encoded (name, buf) @@ no_region) @@ no_region]) run
 
@@ -207,7 +274,11 @@ let input_stdin run =
 (* Printing *)
 
 let print_import m im =
+(*IF-OCAML*)
   let open Types in
+(*ENDIF-OCAML*)
+(*F#
+F#*)
   let category, annotation =
     match Ast.import_type m im with
     | ExternFuncType t -> "func", string_of_func_type t
@@ -216,11 +287,15 @@ let print_import m im =
     | ExternGlobalType t -> "global", string_of_global_type t
   in
   Printf.printf "  import %s \"%s\" \"%s\" : %s\n"
-    category (Ast.string_of_name im.it.Ast.module_name)
-      (Ast.string_of_name im.it.Ast.item_name) annotation
+    category (Ast.string_of_name im.it.(*IF-OCAML*)Ast.(*ENDIF-OCAML*)module_name)
+      (Ast.string_of_name im.it.(*IF-OCAML*)Ast.(*ENDIF-OCAML*)item_name) annotation
 
 let print_export m ex =
+(*IF-OCAML*)
   let open Types in
+(*ENDIF-OCAML*)
+(*F#
+F#*)
   let category, annotation =
     match Ast.export_type m ex with
     | ExternFuncType t -> "func", string_of_func_type t
@@ -229,13 +304,13 @@ let print_export m ex =
     | ExternGlobalType t -> "global", string_of_global_type t
   in
   Printf.printf "  export %s \"%s\" : %s\n"
-    category (Ast.string_of_name ex.it.Ast.name) annotation
+    category (Ast.string_of_name ex.it.(*IF-OCAML*)Ast.(*ENDIF-OCAML*)name) annotation
 
 let print_module x_opt m =
   Printf.printf "module%s :\n"
     (match x_opt with None -> "" | Some x -> " " ^ x.it);
-  List.iter (print_import m) m.it.Ast.imports;
-  List.iter (print_export m) m.it.Ast.exports;
+  List.iter (print_import m) m.it.(*IF-OCAML*)Ast.(*ENDIF-OCAML*)imports;
+  List.iter (print_export m) m.it.(*IF-OCAML*)Ast.(*ENDIF-OCAML*)exports;
   flush_all ()
 
 let print_result vs =
@@ -247,7 +322,20 @@ let print_result vs =
 
 (* Configuration *)
 
+(*IF-OCAML*)
 module Map = Map.Make(String)
+(*ENDIF-OCAML*)
+(*F#
+module Map =
+   struct
+        type 'a t = Map<string,'a>
+        let empty = Map.empty
+        let add = Map.add
+        let find = Map.find
+   end
+ F#*)
+
+
 
 let quote : script ref = ref []
 let scripts : script Map.t ref = ref Map.empty
@@ -334,13 +422,24 @@ let run_assertion ass =
   match ass.it with
   | AssertMalformed (def, re) ->
     trace "Asserting malformed...";
+(*IF-OCAML*)
     (match ignore (run_definition def) with
     | exception Decode.Code (_, msg) -> assert_message ass.at "decoding" msg re
     | exception Parse.Syntax (_, msg) -> assert_message ass.at "parsing" msg re
     | _ -> Assert.error ass.at "expected decoding/parsing error"
     )
+(*ENDIF-OCAML*)
+(*F#
+    (try ignore (run_definition def) with
+    | Decode.Code (_, msg) -> assert_message ass.at "decoding" msg re
+    | Parse.Syntax (_, msg) -> assert_message ass.at "parsing" msg re
+    | _ -> Assert.error ass.at "expected decoding/parsing error"
+    )
+F#*)
+
 
   | AssertInvalid (def, re) ->
+(*IF-OCAML*)
     trace "Asserting invalid...";
     (match
       let m = run_definition def in
@@ -350,11 +449,23 @@ let run_assertion ass =
       assert_message ass.at "validation" msg re
     | _ -> Assert.error ass.at "expected validation error"
     )
-
+(*ENDIF-OCAML*)
+(*F#
+    trace "Asserting invalid...";
+    (try
+      let m = run_definition def in
+      Valid.check_module m
+    with
+    | Valid.Invalid (_, msg) ->
+      assert_message ass.at "validation" msg re
+    | _ -> Assert.error ass.at "expected validation error"
+    )
+F#*)
   | AssertUnlinkable (def, re) ->
     trace "Asserting unlinkable...";
     let m = run_definition def in
     if not !Flags.unchecked then Valid.check_module m;
+(*IF-OCAML*)
     (match
       let imports = Import.link m in
       ignore (Eval.init m imports)
@@ -363,11 +474,22 @@ let run_assertion ass =
       assert_message ass.at "linking" msg re
     | _ -> Assert.error ass.at "expected linking error"
     )
-
+(*ENDIF-OCAML*)
+(*F#
+    (try
+      let imports = Import.link m in
+      ignore (Eval.init m imports)
+    with
+    | (Import.Unknown (_, msg) | Eval.Link (_, msg)) ->
+      assert_message ass.at "linking" msg re
+    | _ -> Assert.error ass.at "expected linking error"
+    )
+F#*)
   | AssertUninstantiable (def, re) ->
     trace "Asserting trap...";
     let m = run_definition def in
     if not !Flags.unchecked then Valid.check_module m;
+(*IF-OCAML*)
     (match
       let imports = Import.link m in
       ignore (Eval.init m imports)
@@ -376,6 +498,17 @@ let run_assertion ass =
       assert_message ass.at "instantiation" msg re
     | _ -> Assert.error ass.at "expected instantiation error"
     )
+(*ENDIF-OCAML*)
+(*F#
+    (try
+      let imports = Import.link m in
+      ignore (Eval.init m imports)
+    with
+    | Eval.Trap (_, msg) ->
+      assert_message ass.at "instantiation" msg re
+    | _ -> Assert.error ass.at "expected instantiation error"
+    )
+F#*)
 
   | AssertReturn (act, vs) ->
     trace ("Asserting return...");
@@ -409,18 +542,37 @@ let run_assertion ass =
 
   | AssertTrap (act, re) ->
     trace ("Asserting trap...");
+(*IF-OCAML*)
     (match run_action act with
     | exception Eval.Trap (_, msg) -> assert_message ass.at "runtime" msg re
     | _ -> Assert.error ass.at "expected runtime error"
     )
+(*ENDIF-OCAML*)
+(*F#
+    (try run_action act |> ignore with
+    |  Eval.Trap (_, msg) -> assert_message ass.at "runtime" msg re
+    | _ -> Assert.error ass.at "expected runtime error"
+    )
+F#*)
+
 
   | AssertExhaustion (act, re) ->
     trace ("Asserting exhaustion...");
+(*IF-OCAML*)
     (match run_action act with
     | exception Eval.Exhaustion (_, msg) ->
       assert_message ass.at "exhaustion" msg re
     | _ -> Assert.error ass.at "expected exhaustion error"
     )
+(*ENDIF-OCAML*)
+(*F#
+    (try run_action act |> ignore with
+    |  Eval.Exhaustion (_, msg) ->
+      assert_message ass.at "exhaustion" msg re
+    | _ -> Assert.error ass.at "expected exhaustion error"
+    )
+F#*)
+
 
 let rec run_command cmd =
   match cmd.it with

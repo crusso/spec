@@ -243,6 +243,8 @@
     <Compile Include="..\..\script\import.mli" />
     <Compile Include="..\..\script\import.ml" />
     
+    <Compile Include="..\..\script\run.mli" />
+    <Compile Include="..\..\script\run.ml" />
     <!--
     <Compile Include="..\..\script\import.mli" />
 

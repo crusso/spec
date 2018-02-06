@@ -15,11 +15,32 @@ exception IO = IO.Error
 (*F#
 open FSharp.Compatibility.OCaml
 
+(*
+module Bytes =
+struct
+    type t = byte[]
+    let make n (c:char) = Array.create n ((byte) c)
+    let set (a:t) n (c:char) = a.[n] <- (byte) c
+    let to_string (a:t) = System.String(Array.map (fun b -> (char) b) a)
+end
+*)
+
+module Bytes =
+struct
+    type t = char[]
+    let make n (c:char) = Array.create n ( c)
+    let set (a:t) n (c:char) = a.[n] <-  c
+    let to_string (a:t) = System.String(a)
+end
+
 //open Microsoft.FSharp.Text.Lexing
 module Lexing =
   struct
-   let from_string is = failwith "NYI"
-   let from_function is = failwith "NYI"
+   let from_string s =  Microsoft.FSharp.Text.Lexing.LexBuffer<char>.FromString(s)
+   let from_function f = 
+        Microsoft.FSharp.Text.Lexing.LexBuffer<'char>.FromFunction(fun (chars,start,len)->f  chars len )
+   let from_channel is = Microsoft.FSharp.Text.Lexing.LexBuffer<char>.FromTextReader(is)
+   let flush_input (lexbuf:Microsoft.FSharp.Text.Lexing.LexBuffer<char>) = lexbuf.DiscardInput() //TBR
   end
 
 module Errors = struct
@@ -51,22 +72,8 @@ exception IO = IO.Error
 open Types
 open Source
 
-module Bytes =
-struct
-    type t = byte[]
-    let make n (c:char) = Array.create n ((byte) c)
-    let set (a:t) n c = a.[n] <- c
-    let to_string (a:t) = System.BitConverter.ToString(a)
-end
-
 let flush_all () = System.Console.Out.Flush();System.Console.Error.Flush() //TBR
 F#*)
-
-
-
-
-
-
 
 let trace name = if !Flags.trace then print_endline ("-- " ^ name)
 
@@ -212,9 +219,17 @@ let input_binary_file file run =
   let ic = open_in_bin file in
   try
     let len = in_channel_length ic in
+(*IF-OCAML*)
     let buf = Bytes.make len '\x00' in
+(*ENDIF-OCAML*)
+(*F#
+    let buf = Array.make len ((byte) 0) in
+F#*)
     really_input ic buf 0 len;
     trace "Decoding...";
+(*F#
+    let buf = Array.map (fun b -> (char) b) buf in
+F#*)
     let success = input_binary file (Bytes.to_string buf) run in
     close_in ic;
     success
@@ -262,8 +277,14 @@ let input_stdin run =
   let rec loop () =
     let success = input_script Parse.Script1 "stdin" lexbuf run in
     if not success then Lexing.flush_input lexbuf;
-    if Lexing.(lexbuf.lex_curr_pos >= lexbuf.lex_buffer_len - 1) then
+(*IF-OCAML*)
+    if Lexing.lexbuf.lex_curr_pos >= Lexing.lexbuf.lex_buffer_len - 1 then
       continuing := false;
+(*ENDIF-OCAML*)
+(*F#
+    if lexbuf.IsPastEndOfStream then //TBR
+      continuing := false;
+F#*)
     loop ()
   in
   try loop () with End_of_file ->

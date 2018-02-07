@@ -237,14 +237,25 @@
     </Compile>
     <Compile Include="..\..\text\print.ml">
       <Link>print.ml</Link>
-      
-      
     </Compile>
-    <Compile Include="..\..\script\import.mli" />
-    <Compile Include="..\..\script\import.ml" />
-    
-    <Compile Include="..\..\script\run.mli" />
-    <Compile Include="..\..\script\run.ml" />
+    <Compile Include="..\..\script\import.mli">
+      <Link>import.mli</Link>
+    </Compile>
+    <Compile Include="..\..\script\import.ml">
+      <Link>import.ml</Link>
+    </Compile>
+    <Compile Include="..\..\script\run.mli">
+      <Link>run.mli</Link>
+    </Compile>
+    <Compile Include="..\..\script\run.ml">
+      <Link>run.ml</Link>
+    </Compile>
+    <Compile Include="..\..\host\spectest.ml">
+      <Link>spectest.ml</Link>
+    </Compile>
+    <Compile Include="..\..\main\main.ml">
+      <Link>main.ml</Link>
+    </Compile>
     <!--
     <Compile Include="..\..\script\import.mli" />
 
@@ -374,7 +385,6 @@
     <Compile Include="..\..\text\arrange.ml" />
     <Compile Include="..\..\util\sexpr.ml" />-->
     <!--<Compile Include="..\..\main\main.d.byte" />-->
-    <Compile Include="Program.fs" />
     <None Include="lexer.mll" />
     <None Include="parser.fsy" />
   </ItemGroup>

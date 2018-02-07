@@ -1,3 +1,7 @@
+(*F#
+open FSharp.Compatibility.OCaml
+F#*)
+
 let name = "wasm"
 let version = "1.0"
 
@@ -15,7 +19,13 @@ let add_arg source = args := !args @ [source]
 
 let quote s = "\"" ^ String.escaped s ^ "\""
 
+(*IF-OCAML*)
 let argspec = Arg.align
+(*ENDIF-OCAML*)
+(*F#
+// TBR
+let argspec =
+F#*)
 [
   "-", Arg.Set Flags.interactive,
     " run interactively (default if no files given)";
@@ -33,9 +43,16 @@ let argspec = Arg.align
   "-t", Arg.Set Flags.trace, " trace execution";
   "-v", Arg.Unit banner, " show version"
 ]
-
+(*IF-OCAML*)
 let () =
+
   Printexc.record_backtrace true;
+(*ENDIF-OCAML*)
+(*F#
+let go() =
+  //TBR
+  let flush_all () = System.Console.Out.Flush();System.Console.Error.Flush() in //TBR
+F#*)
   try
     configure ();
     Arg.parse argspec
@@ -45,11 +62,24 @@ let () =
     if !Flags.interactive then begin
       Flags.print_sig := true;
       banner ();
-      Run.run_stdin ()
+      Run.run_stdin ();
     end
   with exn ->
     flush_all ();
     prerr_endline
-      (Sys.argv.(0) ^ ": uncaught exception " ^ Printexc.to_string exn);
+(*IF-OCAML*)
+    (Sys.argv.(0) ^ ": uncaught exception " ^ Printexc.to_string exn);
     Printexc.print_backtrace stderr;
+(*ENDIF-OCAML*)
+(*F#
+    (System.Environment.GetCommandLineArgs().[0] ^ ": uncaught exception " ^ Printexc.to_string exn);
+     System.Console.Error.WriteLine(exn.StackTrace);
+F#*)
     exit 2
+
+(*F#
+[<EntryPoint>]
+let main(_:string[]):int =
+    go();
+    0
+F#*)

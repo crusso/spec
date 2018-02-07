@@ -1,3 +1,9 @@
+(*F#
+open FSharp.Compatibility.OCaml
+F#*)
+
+
+
 (*
  * Simple collection of functions useful for writing test cases.
  *)
@@ -7,7 +13,17 @@ open Values
 open Instance
 
 
+(*F#
+  //TBR
+let flush_all () = System.Console.Out.Flush();System.Console.Error.Flush() //TBR
+F#*)
+
+(*IF-OCAML*)
 let global (GlobalType (t, _) as gt) =
+(*ENDIF-OCAML*)
+(*F#
+let ``global`` (GlobalType (t, _) as gt) =
+F#*)
   let v =
     match t with
     | I32Type -> I32 666l
@@ -35,8 +51,14 @@ let lookup name t =
   | "print", ExternFuncType t -> ExternFunc (func print t)
   | "print", _ ->
     let t = FuncType ([], []) in ExternFunc (func print t)
+(*IF-OCAML*)
   | "global", ExternGlobalType t -> ExternGlobal (global t)
   | "global", _ -> ExternGlobal (global (GlobalType (I32Type, Immutable)))
+(*ENDIF-OCAML*)
+(*F#
+  | "global", ExternGlobalType t -> ExternGlobal (``global`` t)
+  | "global", _ -> ExternGlobal (``global`` (GlobalType (I32Type, Immutable)))
+F#*)
   | "table", _ -> ExternTable table
   | "memory", _ -> ExternMemory memory
   | _ -> raise Not_found

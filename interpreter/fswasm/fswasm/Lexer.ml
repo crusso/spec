@@ -1934,7 +1934,7 @@ and _fslex_token  _fslex_state lexbuf =
 # 236 "..\..\text\lexer.fsl"
                      let token = lexeme lexbuf in
                      let t = token.Substring(0,3) in
-                     let sz = token.Substring(t.Length+".load".Length-1,token.Length-(t.Length+".load".Length)-2) in
+                     let sz = token.Substring(t.Length+".load".Length,token.Length-(t.Length+".load".Length)-2) in
                      let s = //token.Substring(token.Length-1,1) in
                		token.[token.Length-1] in
                      if t = "i32" && sz = "32" then error lexbuf "unknown operator";
@@ -1954,7 +1954,7 @@ and _fslex_token  _fslex_state lexbuf =
 # 253 "..\..\text\lexer.fsl"
                      let token = lexeme lexbuf in
                      let t = token.Substring(0,3) in
-                     let sz = token.Substring(t.Length+".store".Length-1,token.Length-(t.Length+".store".Length)) in
+                     let sz = token.Substring(t.Length+".store".Length,token.Length-(t.Length+".store".Length)-2) in
                      if t = "i32" && sz = "32" then error lexbuf "unknown operator";
                      STORE (fun a o ->
                        intop t
@@ -1972,7 +1972,7 @@ and _fslex_token  _fslex_state lexbuf =
 # 268 "..\..\text\lexer.fsl"
                                    
                     let token = lexeme lexbuf in
-                    let s = token.Substring("offset=".Length-1) in
+                    let s = token.Substring("offset=".Length) in
                     OFFSET_EQ_NAT s
 # 1977 "Lexer.ml"
           )
@@ -1980,7 +1980,7 @@ and _fslex_token  _fslex_state lexbuf =
 # 272 "..\..\text\lexer.fsl"
                                   
                     let token = lexeme lexbuf in
-                    let s = token.Substring("align=".Length-1) in
+                    let s = token.Substring("align=".Length) in
                     ALIGN_EQ_NAT s 
 # 1985 "Lexer.ml"
           )

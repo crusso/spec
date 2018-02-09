@@ -28,6 +28,7 @@
     <DocumentationFile>bin\$(Configuration)\$(AssemblyName).XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
     <OtherFlags>--mlcompatibility</OtherFlags>
+    <StartArguments>..\..\..\..\..\test\core\br.wast</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>

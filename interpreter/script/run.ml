@@ -451,7 +451,9 @@ let run_assertion ass =
     )
 (*ENDIF-OCAML*)
 (*F#
-    (try ignore (run_definition def) with
+    (try ignore (run_definition def);
+         Assert.error ass.at "expected decoding/parsing error"
+     with
     | Decode.Code (_, msg) -> assert_message ass.at "decoding" msg re
     | Parse.Syntax (_, msg) -> assert_message ass.at "parsing" msg re
     | _ -> Assert.error ass.at "expected decoding/parsing error"
@@ -475,7 +477,8 @@ F#*)
     trace "Asserting invalid...";
     (try
       let m = run_definition def in
-      Valid.check_module m
+      Valid.check_module m;
+      Assert.error ass.at "expected validation error"
     with
     | Valid.Invalid (_, msg) ->
       assert_message ass.at "validation" msg re
@@ -499,7 +502,8 @@ F#*)
 (*F#
     (try
       let imports = Import.link m in
-      ignore (Eval.init m imports)
+      ignore (Eval.init m imports);
+      Assert.error ass.at "expected linking error"
     with
     | (Import.Unknown (_, msg) | Eval.Link (_, msg)) ->
       assert_message ass.at "linking" msg re
@@ -523,7 +527,8 @@ F#*)
 (*F#
     (try
       let imports = Import.link m in
-      ignore (Eval.init m imports)
+      ignore (Eval.init m imports);
+      Assert.error ass.at "expected instantiation error"
     with
     | Eval.Trap (_, msg) ->
       assert_message ass.at "instantiation" msg re
@@ -570,9 +575,11 @@ F#*)
     )
 (*ENDIF-OCAML*)
 (*F#
-    (try run_action act |> ignore with
-    |  Eval.Trap (_, msg) -> assert_message ass.at "runtime" msg re
-    | _ -> Assert.error ass.at "expected runtime error"
+    (try run_action act |> ignore;
+         Assert.error ass.at "expected runtime error"
+     with
+     |  Eval.Trap (_, msg) -> assert_message ass.at "runtime" msg re
+     | _ -> Assert.error ass.at "expected runtime error"
     )
 F#*)
 
@@ -587,10 +594,12 @@ F#*)
     )
 (*ENDIF-OCAML*)
 (*F#
-    (try run_action act |> ignore with
-    |  Eval.Exhaustion (_, msg) ->
-      assert_message ass.at "exhaustion" msg re
-    | _ -> Assert.error ass.at "expected exhaustion error"
+    (try run_action act |> ignore;
+         Assert.error ass.at "expected exhaustion error"
+     with
+     |  Eval.Exhaustion (_, msg) ->
+       assert_message ass.at "exhaustion" msg re
+     | _ -> Assert.error ass.at "expected exhaustion error"
     )
 F#*)
 

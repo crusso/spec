@@ -49,9 +49,9 @@ let () =
   Printexc.record_backtrace true;
 (*ENDIF-OCAML*)
 (*F#
+let flush_all () = System.Console.Out.Flush();System.Console.Error.Flush()  //TBR
 let go() =
   //TBR
-  let flush_all () = System.Console.Out.Flush();System.Console.Error.Flush() in //TBR
 F#*)
   try
     configure ();
@@ -74,6 +74,7 @@ F#*)
 (*F#
     (System.Environment.GetCommandLineArgs().[0] ^ ": uncaught exception " ^ Printexc.to_string exn);
      System.Console.Error.WriteLine(exn.StackTrace);
+    flush_all ();
 F#*)
     exit 2
 
@@ -81,5 +82,6 @@ F#*)
 [<EntryPoint>]
 let main(_:string[]):int =
     go();
+    flush_all ();
     0
 F#*)

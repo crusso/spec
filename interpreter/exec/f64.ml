@@ -43,6 +43,7 @@ include Float.Make
     let bits_of_float (f:float ) = System.BitConverter.DoubleToInt64Bits(f)
 
     let float_of_bits (i:int64) =  System.BitConverter.Int64BitsToDouble(i)
+
     let string_of_float (f:float) = f.ToString()
     let float_of_string s = let  r = ref 0.0 in
                             if System.Double.TryParse(s,r)

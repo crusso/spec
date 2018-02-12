@@ -115,10 +115,13 @@ let push (ell1, ts1) (ell2, ts2) =
   (if ell1 = Ellipses || ell2 = Ellipses then Ellipses else NoEllipses),
   ts2 @ ts1
 
-let peek i (ell, ts) =
+let peek i (ell, ts) =  
+(*IF-OCAML*)
   try List.nth (List.rev ts) i with Failure _ -> None
-
-
+(*ENDIF-OCAML*)
+(*F#
+    try List.nth (List.rev ts) i with  _ -> None
+F#*)
 (* Type Synthesis *)
 
 let type_value = Values.type_of

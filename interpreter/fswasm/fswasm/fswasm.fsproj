@@ -28,7 +28,7 @@
     <DocumentationFile>bin\$(Configuration)\$(AssemblyName).XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
     <OtherFlags>--mlcompatibility</OtherFlags>
-    <StartArguments>..\..\..\..\..\test\core\br.wast</StartArguments>
+    <StartArguments>-t ..\..\..\..\..\test\core\br.wast</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -207,7 +207,7 @@
       <Link>parser.fsy</Link>
     </FsYacc>
     <FsLex Include="..\..\text\lexer.fsl">
-      <OtherFlags>-o Lexer.ml --unicode</OtherFlags>
+      <OtherFlags>--unicode -o Lexer.ml </OtherFlags>
       <Link>lexer.fsl</Link>
     </FsLex>
     <Compile Include="Parser.ml" />

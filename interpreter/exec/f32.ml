@@ -27,8 +27,14 @@ include Float.Make
     let bare_nan = 0x7f800000l
     let to_hex_string (f:int32) = //Printf.sprintf "%lx"
                         System.BitConverter.ToString(System.BitConverter.GetBytes(f)).Replace("-","") //TBR
-    let bits_of_float (f:float ) = System.BitConverter.ToInt32(System.BitConverter.GetBytes(f),0)
-    let float_of_bits (i:int) =  System.BitConverter.ToDouble(System.BitConverter.GetBytes(i),0)
+    let bits_of_float (f:float ) = 
+        let bytes = System.BitConverter.GetBytes(f) in // TBR
+        if System.BitConverter.IsLittleEndian then System.Array.Reverse(bytes);System.Array.Reverse(bytes);
+        System.BitConverter.ToInt32(bytes,0)
+    let float_of_bits (i:int) =  
+        let bytes = System.BitConverter.GetBytes(i) in //TBR
+        if System.BitConverter.IsLittleEndian then System.Array.Reverse(bytes);
+        System.BitConverter.ToDouble(bytes,0)
     let string_of_float (f:float) = f.ToString()
     let float_of_string s = let  r = ref 0.0 in
                             if System.Double.TryParse(s,r)

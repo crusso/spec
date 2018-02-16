@@ -36,11 +36,12 @@ include Float.Make
         if System.BitConverter.IsLittleEndian then System.Array.Reverse(bytes);
         (double) (System.BitConverter.ToSingle(bytes,0))
     let string_of_float (f:float) = f.ToString()
-    let float_of_string s = let  r = ref 0.0 in
+    let float_of_string s = let  r = ref 0.0 in  // TBR doesn't match Ocaml semantics
                             if System.Double.TryParse(s,r)
                             then
                                 !r
-                            else failwith ("float_of_string:"^s)
+                            else (assert(false); 
+                                 failwith ("float_of_string:"^s))
     let logand = I32.Rep.logand
     let lognot = I32.Rep.lognot
     let of_string = I32.of_string
